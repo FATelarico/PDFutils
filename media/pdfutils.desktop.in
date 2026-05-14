@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=@APP_DISPLAY_NAME@
+Comment=@CPACK_PACKAGE_DESCRIPTION_SUMMARY@
+Exec=@APP_EXECUTABLE_NAME@
+Icon=@APP_ICON_NAME@
+Categories=Utility;
+Terminal=false
+StartupNotify=true

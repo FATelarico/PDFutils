@@ -1,3 +1,6 @@
+# Python
+*.py
+
 # C++ objects and libs
 *.slo
 *.lo
@@ -29,7 +32,6 @@ ui_*.h
 *.jsc
 Makefile*
 *build-*
-build/
 *.qm
 *.prl
 *.qmlls.ini
@@ -54,3 +56,11 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+
+QtBuild/
+.qtcreator/
+.FAT/
+.lupdate/
+.cmake/
+.qtc_clangd/
+build/
