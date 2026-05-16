@@ -1,5 +1,9 @@
 #include "mainwindow.h"
 
+#ifndef APP_RELEASE_DATE
+#define APP_RELEASE_DATE "2026-05-01T00:00:00Z"
+#endif
+
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
@@ -7,6 +11,10 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    QCoreApplication::setApplicationName("PDFutils");
+    QCoreApplication::setOrganizationName("FATelarico");
+    QCoreApplication::setApplicationVersion(APP_VERSION);
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
@@ -17,6 +25,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
     MainWindow w;
     w.show();
     return QCoreApplication::exec();

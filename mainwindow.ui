@@ -1153,7 +1153,7 @@ QTimeEdit, QToolBox, QToolBox::tab, QToolBox::tab:selected {
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="geometry">
     <rect>
@@ -1163,8 +1163,70 @@ QTimeEdit, QToolBox, QToolBox::tab, QToolBox::tab:selected {
      <height>19</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+    <widget class="QMenu" name="menuVerify_updates">
+     <property name="title">
+      <string>Version 0.2.0-alpha</string>
+     </property>
+     <addaction name="link00c"/>
+     <addaction name="link00"/>
+    </widget>
+    <addaction name="menuVerify_updates"/>
+    <addaction name="link00a"/>
+   </widget>
+   <widget class="QMenu" name="menuAccessories">
+    <property name="title">
+     <string>Accessories</string>
+    </property>
+    <addaction name="link00d"/>
+    <addaction name="link00e"/>
+   </widget>
+   <addaction name="menuAbout"/>
+   <addaction name="menuAccessories"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="label00">
+   <property name="text">
+    <string>Version: 0.1.0-alpha</string>
+   </property>
+  </action>
+  <action name="link00a">
+   <property name="text">
+    <string>GitHub</string>
+   </property>
+  </action>
+  <action name="link00d">
+   <property name="text">
+    <string>Install GhostScript</string>
+   </property>
+  </action>
+  <action name="link00e">
+   <property name="text">
+    <string>Check out qPDF</string>
+   </property>
+  </action>
+  <action name="link00c">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Allow pre-release</string>
+   </property>
+   <property name="toolTip">
+    <string>Swtich between the stable and pre-release branches for updates</string>
+   </property>
+  </action>
+  <action name="link00">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Check for updates</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="media.qrc"/>

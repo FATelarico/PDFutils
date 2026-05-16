@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(PDFutils VERSION 0.1.0 LANGUAGES CXX)
+project(PDFutils VERSION 0.2.0 LANGUAGES CXX)
 # Add pre-release tags tags
 set(PDFUTILS_PRERELEASE "alpha")
 set(PDFUTILS_DISPLAY_VERSION "${PROJECT_VERSION}-${PDFUTILS_PRERELEASE}")
@@ -15,8 +15,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(GNUInstallDirs)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools Network)
 
 find_package(PkgConfig QUIET)
 
@@ -101,6 +101,7 @@ else()
     else()
         add_executable(PDFutils
             ${PROJECT_SOURCES}
+            mainwindow_helpers.cpp
         )
     endif()
 
@@ -110,6 +111,7 @@ endif()
 target_link_libraries(PDFutils
     PRIVATE
         Qt${QT_VERSION_MAJOR}::Widgets
+        Qt${QT_VERSION_MAJOR}::Network
         ${QPDF_TARGET}
 )
 
@@ -128,6 +130,11 @@ set_target_properties(PDFutils PROPERTIES
 install(TARGETS PDFutils
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+target_compile_definitions(PDFutils PRIVATE
+    APP_VERSION="${PDFUTILS_DISPLAY_VERSION}"
+    APP_RELEASE_DATE="2026-05-01"
 )
 
 #
