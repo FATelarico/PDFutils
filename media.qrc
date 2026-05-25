@@ -25,5 +25,6 @@
         <file>media/menu.svg</file>
         <file>media/performance.svg</file>
         <file>media/checkmark.svg</file>
+        <file>media/image.svg</file>
     </qresource>
 </RCC>

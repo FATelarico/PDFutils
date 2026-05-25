@@ -5,6 +5,7 @@
 #include "extract.h"
 #include "insert.h"
 #include "compress.h"
+#include "convertimg.h"
 
 #include <QDebug>
 
@@ -61,6 +62,12 @@ MainWindow::MainWindow(QWidget *parent)
         // QMessageBox::information(this, "Clicked", "Button was clicked"); // Only opens a pop-up
         compress *compressWindow = new compress(this);
         compressWindow->show();
+    });
+
+    connect(ui->btn09_img, &QPushButton::clicked, this, [this]() {
+        // QMessageBox::information(this, "Clicked", "Button was clicked"); // Only opens a pop-up
+        convertimg *convertimgWindow = new convertimg(this);
+        convertimgWindow->show();
     });
 
     connect(ui->link00a, &QAction::triggered, this, []() {

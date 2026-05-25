@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(PDFutils VERSION 0.2.0 LANGUAGES CXX)
+project(PDFutils VERSION 0.3.0 LANGUAGES CXX)
 # Add pre-release tags tags
 set(PDFUTILS_PRERELEASE "alpha")
 set(PDFUTILS_DISPLAY_VERSION "${PROJECT_VERSION}-${PDFUTILS_PRERELEASE}")
@@ -102,6 +102,8 @@ else()
         add_executable(PDFutils
             ${PROJECT_SOURCES}
             mainwindow_helpers.cpp
+            convertimg.h convertimg.ui
+            convertimg.cpp
         )
     endif()
 

@@ -116,92 +116,71 @@ merge::merge(QWidget *parent)
     });
 
     connect(ui->btn15, &QPushButton::clicked, this, [this]() {
-        const int pathColumn = 0;
-
-        const QStringList pdfPaths =
-            getPdfPathsFromTableWidget(ui->tbl09, pathColumn);
-
-        const int documentCount = pdfPaths.size();
-
-        if (documentCount <= 0) {
-            QMessageBox::warning(
-                this,
-                tr("No PDFs selected"),
-                tr("Add at least one PDF before merging.")
-            );
-            return;
-        }
+        // Parse page ranges
+        const int documentCount = ui->tbl09->rowCount();
 
         QString error;
         QVector<DocumentPageSelection> selections =
             parsePageSelections(ui->lineEdit11->text(), documentCount, error);
 
         if (!error.isEmpty()) {
-            QMessageBox::warning(this, tr("Invalid page range"), error);
+            QMessageBox::warning(this, "Invalid page range", error);
             return;
-        }
+        } /* else {
+             debugPrintSelections(selections); // For checking that the parser works
+        } */
+
+        // Validate the requested pages
+        const int pathColumn = 0; // Column where the file path is stored
+
+        const QStringList pdfPaths =
+            getPdfPathsFromTableWidget(ui->tbl09, pathColumn);
 
         QVector<int> pageCounts;
         QString pageCountError;
 
         if (!getPdfPageCountsWithLibQpdf(pdfPaths, pageCounts, pageCountError)) {
-            QMessageBox::warning(this, tr("Could not read PDF page counts"), pageCountError);
+            QMessageBox::warning(this, "Could not read PDF page counts", pageCountError);
             return;
         }
+
+        /*
+        qDebug() << "PDF paths:" << pdfPaths;
+        qDebug() << "Page counts:" << pageCounts;
+
+        QMessageBox::information(this, "Validation successful", "The requested page ranges are valid.");
+        */
 
         QString validationError;
 
         if (!validateSelectionsAgainstPageCounts(selections, pageCounts, validationError)) {
-            QMessageBox::warning(this, tr("Invalid page range"), validationError);
+            QMessageBox::warning(this, "Invalid page range", validationError);
             return;
         }
 
         const QString outputPath = QFileDialog::getSaveFileName(
             this,
-            tr("Save merged PDF"),
+            "Save merged PDF",
             QDir::homePath() + "/merged.pdf",
-            tr("PDF files (*.pdf)"),
+            "PDF files (*.pdf)",
             nullptr,
             QFileDialog::DontUseNativeDialog
         );
 
-        if (outputPath.trimmed().isEmpty()) {
-            QMessageBox::warning(
-                this,
-                tr("Choose a destination"),
-                tr("Destination file's path cannot be empty")
-            );
+
+        if (outputPath.isEmpty()){
+            QMessageBox::warning(this, "Choose a destination", "Destination file's path cannot be empty");
             return;
         }
 
         QString mergeError;
-        const bool generateHyperlinkedToc = ui->check14->isChecked();
 
-        const bool ok = generateHyperlinkedToc
-            ? mergeSelectedPagesWithHyperlinkedToc(
-                  pdfPaths,
-                  selections,
-                  pageCounts,
-                  outputPath,
-                  mergeError)
-            : mergeSelectedPagesWithLibQpdf(
-                  pdfPaths,
-                  selections,
-                  outputPath,
-                  mergeError);
-
-        if (!ok) {
-            QMessageBox::critical(this, tr("Merge failed"), mergeError);
+        if (!mergeSelectedPagesWithLibQpdf(pdfPaths, selections, outputPath, mergeError)) {
+            QMessageBox::critical(this, "Merge failed", mergeError);
             return;
         }
 
-        QMessageBox::information(
-            this,
-            tr("Merge complete"),
-            generateHyperlinkedToc
-                ? tr("The PDF files were merged successfully with a hyperlinked table of contents.")
-                : tr("The PDF files were merged successfully.")
-        );
+        QMessageBox::information(this, "Merge complete", "The PDF files were merged successfully.");
     });
 }
 
