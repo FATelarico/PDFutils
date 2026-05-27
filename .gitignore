@@ -1,3 +1,7 @@
+# Backups
+*.bak
+*.BAK
+
 # Python
 *.py
 
@@ -57,6 +61,7 @@ compile_commands.json
 
 *_qmlcache.qrc
 
+# Custom
 QtBuild/
 .qtcreator/
 .FAT/
@@ -64,3 +69,5 @@ QtBuild/
 .cmake/
 .qtc_clangd/
 build/
+*.zip
+*.xcf

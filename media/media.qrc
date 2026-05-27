@@ -1,0 +1,37 @@
+<RCC>
+    <qresource prefix="/">
+        <file>MacOS.qss</file>
+        <file>insert-page.svg</file>
+        <file>image.svg</file>
+        <file>help.svg</file>
+        <file>gs.png</file>
+        <file>flow-data.svg</file>
+        <file>extract.svg</file>
+        <file>document-subtract.svg</file>
+        <file>document-add.svg</file>
+        <file>custom-utils-gui.png</file>
+        <file>compress.svg</file>
+        <file>clean.svg</file>
+        <file>choices.svg</file>
+        <file>checkmark.svg</file>
+        <file>bookmark.svg</file>
+        <file>array-numbers.svg</file>
+        <file>adobe.png</file>
+        <file>add-document.svg</file>
+        <file>table-of-contents.svg</file>
+        <file>split.svg</file>
+        <file>select-range.svg</file>
+        <file>performance.svg</file>
+        <file>pdfutils.rc</file>
+        <file>pdfutils.png</file>
+        <file>pdfutils.ico</file>
+        <file>pdfutils.icns</file>
+        <file>pdf.svg</file>
+        <file>pdf.png</file>
+        <file>page-scroll.svg</file>
+        <file>minimize.svg</file>
+        <file>merge.svg</file>
+        <file>menu.svg</file>
+        <file>translate.svg</file>
+    </qresource>
+</RCC>

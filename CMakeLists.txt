@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(PDFutils VERSION 0.3.0 LANGUAGES CXX)
-# Add pre-release tags tags
-set(PDFUTILS_PRERELEASE "alpha")
+project(PDFutils VERSION 0.4.0 LANGUAGES CXX)
+
+set(PDFUTILS_PRERELEASE "beta")
 set(PDFUTILS_DISPLAY_VERSION "${PROJECT_VERSION}-${PDFUTILS_PRERELEASE}")
 set(PDFUTILS_DEBIAN_VERSION "${PROJECT_VERSION}~${PDFUTILS_PRERELEASE}")
 
@@ -15,8 +15,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(GNUInstallDirs)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools Network)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets LinguistTools Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets LinguistTools Network)
 
 find_package(PkgConfig QUIET)
 
@@ -32,127 +32,339 @@ else()
 endif()
 
 set(TS_FILES
-    PDFutils_en_GB.ts
+    # translations/PDFutils_en_GB.ts # Source lanuage
+    translations/PDFutils_it_IT.ts
 )
 
-set(PROJECT_SOURCES
-    main.cpp
+# -----------------------------------------------------------------------------
+# Core target
+#
+# Shared backend.
+# -----------------------------------------------------------------------------
 
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
+set(CORE_SOURCES
+    core/operation_result.h
+    core/operation_result.cpp
 
-    merge.cpp
-    merge.h
-    merge.ui
+    core/page_range.h
+    core/page_range.cpp
 
-    split.cpp
-    split.h
-    split.ui
+    core/qpdf_utils.h
+    core/qpdf_utils.cpp
 
-    extract.cpp
-    extract.h
-    extract.ui
+    core/merge_service.h
+    core/merge_service.cpp
 
-    insert.cpp
-    insert.h
-    insert.ui
+    core/split_service.h
+    core/split_service.cpp
 
-    compress.cpp
-    compress.h
-    compress.ui
+    core/extract_service.h
+    core/extract_service.cpp
 
-    debugPrintSelections.cpp
-    debugPrintSelections.h
+    core/insert_service.h
+    core/insert_service.cpp
 
-    merge_helpers.cpp
-    helptexts.cpp
+    core/compress_service.h
+    core/compress_service.cpp
 
-    media.qrc
-
-    ${TS_FILES}
+    core/image_to_pdf_service.h
+    core/image_to_pdf_service.cpp
 )
 
-#
-# Do NOT add these helper .cpp files here if they are included manually
-# inside other .cpp files with #include "...cpp".
-#
-# split_helpers.cpp
+add_library(pdfutils_core STATIC
+    ${CORE_SOURCES}
+)
+
+target_link_libraries(pdfutils_core
+    PUBLIC
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Gui
+        ${QPDF_TARGET}
+)
+
+target_include_directories(pdfutils_core
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+)
+
+# -----------------------------------------------------------------------------
+# Updates target.
+# -----------------------------------------------------------------------------
+
+add_library(PDFutils_updates STATIC
+    updates/github_release_info.h
+    updates/github_release_parser.h
+    updates/github_release_parser.cpp
+    updates/github_update_checker.h
+    updates/github_update_checker.cpp
+)
+
+target_include_directories(PDFutils_updates PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/updates
+)
+
+target_link_libraries(PDFutils_updates PUBLIC
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Network
+)
+
+# -----------------------------------------------------------------------------
+# GUI target.
+# -----------------------------------------------------------------------------
+
+set(GUI_SOURCES
+    gui/main_gui.cpp
+
+    gui/mainwindow.cpp
+    gui/mainwindow.h
+    gui/mainwindow.ui
+    gui/mainwindow_helpers.cpp
+
+    gui/merge.cpp
+    gui/merge.h
+    gui/merge.ui
+
+    gui/split.cpp
+    gui/split.h
+    gui/split.ui
+
+    gui/extract.cpp
+    gui/extract.h
+    gui/extract.ui
+
+    gui/insert.cpp
+    gui/insert.h
+    gui/insert.ui
+
+    gui/compress.cpp
+    gui/compress.h
+    gui/compress.ui
+
+    gui/convertimg.cpp
+    gui/convertimg.h
+    gui/convertimg.ui
+
+    gui/debugPrintSelections.cpp
+    gui/debugPrintSelections.h
+
+    gui/helptexts.cpp
+    gui/helptexts.h
+
+    gui/langselector.ui
+    gui/langselector.cpp
+    gui/langselector.h
+
+    media/media.qrc
+)
+
+# These helpers are still intentionally excluded while they are manually included
+# by their owning GUI source files. When each module is refactored, move its logic
+# into pdfutils_core and compile the corresponding .cpp normally.
+# helptexts.cpp is still included manually by merge.cpp until it is given a header.
+# split_helpers.cpp is now refactored into split_service.cpp.
 # extract_helpers.cpp
 # insert_helpers.cpp
 # compress_helpers.cpp
-#
-# If they are normal separately compiled source files, remove this comment
-# and add them to PROJECT_SOURCES properly.
-#
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(PDFutils
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-
-    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-else()
-    if(ANDROID)
-        add_library(PDFutils SHARED
-            ${PROJECT_SOURCES}
-        )
-    else()
-        add_executable(PDFutils
-            ${PROJECT_SOURCES}
-            mainwindow_helpers.cpp
-            convertimg.h convertimg.ui
-            convertimg.cpp
-        )
-    endif()
-
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+if(WIN32 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.rc")
+    list(APPEND GUI_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.rc")
 endif()
 
-target_link_libraries(PDFutils
+if(APPLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.icns")
+    set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.icns")
+    set_source_files_properties(${APP_ICON_MACOS}
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    list(APPEND GUI_SOURCES ${APP_ICON_MACOS})
+endif()
+
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(PDFutils-gui
+        MANUAL_FINALIZATION
+        ${GUI_SOURCES}
+    )
+else()
+    if(ANDROID)
+        add_library(PDFutils-gui SHARED
+            ${GUI_SOURCES}
+        )
+    else()
+        add_executable(PDFutils-gui
+            ${GUI_SOURCES}
+
+        )
+    endif()
+endif()
+
+# -----------------------------------------------------------------------------
+# Translation targets.
+#
+# Use explicit project-level target names for both Qt 5 and Qt 6:
+#
+#   cmake --build build --target PDFutils_lupdate
+#   cmake --build build --target PDFutils_lrelease
+#
+# The Qt helper macros create different target names depending on Qt major
+# version and Qt minor version, so call the LinguistTools executables directly.
+# -----------------------------------------------------------------------------
+set(PDFUTILS_TRANSLATION_SOURCES
+    ${GUI_SOURCES}
+    ${CORE_SOURCES}
+)
+
+set(QM_FILES)
+set(PDFUTILS_QM_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/translations")
+file(MAKE_DIRECTORY "${PDFUTILS_QM_OUTPUT_DIR}")
+
+if(TARGET Qt${QT_VERSION_MAJOR}::lupdate)
+    set(PDFUTILS_LUPDATE_EXECUTABLE Qt${QT_VERSION_MAJOR}::lupdate)
+else()
+    find_program(PDFUTILS_LUPDATE_EXECUTABLE
+        NAMES lupdate-qt${QT_VERSION_MAJOR} lupdate
+    )
+endif()
+
+if(TARGET Qt${QT_VERSION_MAJOR}::lrelease)
+    set(PDFUTILS_LRELEASE_EXECUTABLE Qt${QT_VERSION_MAJOR}::lrelease)
+else()
+    find_program(PDFUTILS_LRELEASE_EXECUTABLE
+        NAMES lrelease-qt${QT_VERSION_MAJOR} lrelease
+    )
+endif()
+
+if(NOT PDFUTILS_LUPDATE_EXECUTABLE)
+    message(FATAL_ERROR "Could not find Qt lupdate. Install the Qt LinguistTools package for the selected Qt version.")
+endif()
+
+if(NOT PDFUTILS_LRELEASE_EXECUTABLE)
+    message(FATAL_ERROR "Could not find Qt lrelease. Install the Qt LinguistTools package for the selected Qt version.")
+endif()
+
+add_custom_target(PDFutils_lupdate
+    COMMAND ${PDFUTILS_LUPDATE_EXECUTABLE}
+            ${PDFUTILS_TRANSLATION_SOURCES}
+            -ts ${TS_FILES}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Updating Qt translation source files"
+    VERBATIM
+)
+
+foreach(_ts_file IN LISTS TS_FILES)
+    if(IS_ABSOLUTE "${_ts_file}")
+        set(_ts_path "${_ts_file}")
+    else()
+        set(_ts_path "${CMAKE_CURRENT_SOURCE_DIR}/${_ts_file}")
+    endif()
+
+    get_filename_component(_ts_name "${_ts_file}" NAME_WE)
+    set(_qm_file "${PDFUTILS_QM_OUTPUT_DIR}/${_ts_name}.qm")
+
+    add_custom_command(
+        OUTPUT "${_qm_file}"
+        COMMAND ${PDFUTILS_LRELEASE_EXECUTABLE}
+                "${_ts_path}"
+                -qm "${_qm_file}"
+        DEPENDS "${_ts_path}"
+        COMMENT "Compiling ${_ts_file}"
+        VERBATIM
+    )
+
+    list(APPEND QM_FILES "${_qm_file}")
+endforeach()
+
+add_custom_target(PDFutils_lrelease
+    DEPENDS ${QM_FILES}
+)
+
+add_custom_target(update_translations)
+add_dependencies(update_translations PDFutils_lupdate)
+
+add_custom_target(release_translations)
+add_dependencies(release_translations PDFutils_lrelease)
+
+install(
+    DIRECTORY "${PDFUTILS_QM_OUTPUT_DIR}/"
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pdfutils/translations"
+    FILES_MATCHING PATTERN "*.qm"
+)
+
+target_include_directories(PDFutils-gui
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/gui
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+)
+
+target_link_libraries(PDFutils-gui
     PRIVATE
         Qt${QT_VERSION_MAJOR}::Widgets
         Qt${QT_VERSION_MAJOR}::Network
-        ${QPDF_TARGET}
+        PDFutils_updates
+        pdfutils_core
 )
+
+# A normal GUI build also compiles the current .ts files into .qm
+add_dependencies(PDFutils-gui PDFutils_lrelease)
+
+# -----------------------------------------------------------------------------
+# CLI target.
+#
+# The CLI must not link Qt::Widgets. It should parse arguments, build options,
+# call pdfutils_core, print the result, and exit with a meaningful status code.
+# -----------------------------------------------------------------------------
+add_executable(PDFutils-cli
+    cli/main_cli.cpp
+)
+
+
+target_link_libraries(PDFutils-cli
+    PRIVATE
+        Qt${QT_VERSION_MAJOR}::Core
+        pdfutils_core
+        PDFutils_updates
+)
+
+target_include_directories(PDFutils-cli
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/cli
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+)
+
+function(pdfutils_apply_app_metadata target_name)
+    target_compile_definitions(${target_name} PRIVATE
+        APP_VERSION="${PDFUTILS_DISPLAY_VERSION}"
+        APP_RELEASE_DATE="2026-05-01"
+    )
+endfunction()
+
+pdfutils_apply_app_metadata(PDFutils-gui)
+pdfutils_apply_app_metadata(PDFutils-cli)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
     set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.PDFutils)
 endif()
 
-set_target_properties(PDFutils PROPERTIES
+set_target_properties(PDFutils-gui PROPERTIES
     ${BUNDLE_ID_OPTION}
+    MACOSX_BUNDLE_BUNDLE_NAME "PDFutils-gui"
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
 
-install(TARGETS PDFutils
+set_target_properties(PDFutils-cli PROPERTIES
+    WIN32_EXECUTABLE FALSE
+)
+
+install(TARGETS PDFutils-gui PDFutils-cli
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-target_compile_definitions(PDFutils PRIVATE
-    APP_VERSION="${PDFUTILS_DISPLAY_VERSION}"
-    APP_RELEASE_DATE="2026-05-01"
-)
-
-#
-# Optional Linux desktop launcher.
-# media/pdfutils.will be used to make the app to appear in launchers.
-#
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.desktop")
-    install(FILES media/pdfutils.desktop
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
-    )
-endif()
-
-#
-# Optional application icon.
-# Stored as media/pdfutils.png.
-#
+# -----------------------------------------------------------------------------
+# Optional Linux desktop launcher and icon.
+# -----------------------------------------------------------------------------
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.png")
     install(FILES media/pdfutils.png
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
@@ -162,32 +374,24 @@ endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_generate_deploy_app_script(
-        TARGET PDFutils
+        TARGET PDFutils-gui
         OUTPUT_SCRIPT deploy_script
         NO_UNSUPPORTED_PLATFORM_ERROR
     )
 
     install(SCRIPT ${deploy_script})
-    qt_finalize_executable(PDFutils)
+    qt_finalize_executable(PDFutils-gui)
 endif()
 
-#
+# -----------------------------------------------------------------------------
 # Package settings.
-# Uses:
-#   Linux:   DEB
-#   Windows: ZIP and NSIS installer
-#   macOS:   DragNDrop DMG
-#
+# -----------------------------------------------------------------------------
 set(CPACK_PACKAGE_VERSION "${PDFUTILS_DISPLAY_VERSION}")
-# A hyphen separates the upstream version from the Debian package revision, so
-# CPACK_DEBIAN_PACKAGE_VERSION may contain '-' only when CPACK_DEBIAN_PACKAGE_RELEASE is set.
 set(CPACK_DEBIAN_PACKAGE_VERSION "${PDFUTILS_DEBIAN_VERSION}")
 set(CPACK_PACKAGE_VENDOR "FATelarico")
 set(CPACK_PACKAGE_CONTACT "contact.fatelarico@dewdata.com")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Qt GUI utility for working with PDF files")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Qt GUI and CLI utilities for working with PDF files")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/FATelarico/PDFutils")
-
-# Adds a licence file
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE")
 
 if(UNIX AND NOT APPLE)
@@ -201,21 +405,23 @@ else()
     )
 endif()
 
-# Configures the Linux desktop file
+# Configure the Linux desktop file for the GUI executable.
 set(APP_DISPLAY_NAME "PDFutils")
-set(APP_EXECUTABLE_NAME "PDFutils")
+set(APP_EXECUTABLE_NAME "PDFutils-gui")
 set(APP_ICON_NAME "pdfutils")
 
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.desktop.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/media/pdfutils.desktop"
-    @ONLY
-)
-
-if(UNIX AND NOT APPLE)
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/media/pdfutils.desktop"
-        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.desktop.in")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.desktop.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/media/pdfutils.desktop"
+        @ONLY
     )
+
+    if(UNIX AND NOT APPLE)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/media/pdfutils.desktop"
+            DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
+        )
+    endif()
 endif()
 
 if(WIN32)
@@ -224,58 +430,29 @@ if(WIN32)
     set(CPACK_PACKAGE_NAME "PDFutils")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "PDFutils")
 
-    # Optional but useful for NSIS installers
     set(CPACK_NSIS_DISPLAY_NAME "PDFutils")
     set(CPACK_NSIS_PACKAGE_NAME "PDFutils")
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 
-    set(APP_ICON_RESOURCE_WINDOWS
-        "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.rc"
-    )
-
-    list(APPEND PROJECT_SOURCES
-        ${APP_ICON_RESOURCE_WINDOWS}
-    )
-
-    # Start Menu shortcut
     set(CPACK_PACKAGE_EXECUTABLES
-        "PDFutils" "PDFutils"
+        "PDFutils-gui" "PDFutils GUI"
+        "PDFutils-cli" "PDFutils CLI"
     )
 
-    # Desktop shortcut
     set(CPACK_CREATE_DESKTOP_LINKS
-        "PDFutils"
+        "PDFutils-gui"
     )
-
 elseif(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
-
     set(CPACK_PACKAGE_NAME "PDFutils")
-
-    set(APP_ICON_MACOS
-        "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.icns"
-    )
-
-    set_source_files_properties(${APP_ICON_MACOS}
-        PROPERTIES
-            MACOSX_PACKAGE_LOCATION "Resources"
-    )
-
-    list(APPEND PROJECT_SOURCES
-        ${APP_ICON_MACOS}
-    )
-
 elseif(UNIX)
     set(CPACK_GENERATOR "DEB")
 
-    # Debian package names should be lowercase
     set(CPACK_PACKAGE_NAME "pdfutils")
-
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "FATelarico <contact.fatelarico@dewdata.com>")
     set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 endif()
 
