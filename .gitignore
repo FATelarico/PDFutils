@@ -71,3 +71,6 @@ QtBuild/
 build/
 *.zip
 *.xcf
+qtcsettings.cmake
+.ninja_deps
+.ninja_log
