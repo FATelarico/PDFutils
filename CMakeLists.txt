@@ -473,19 +473,11 @@ add_test(
 # -----------------------------------------------------------------------------
 
 if(QT_VERSION_MAJOR EQUAL 6 AND COMMAND qt_generate_deploy_app_script)
-    if(Qt6_VERSION VERSION_LESS 6.5)
-        qt_generate_deploy_app_script(
-            TARGET PDFutils-gui
-            FILENAME_VARIABLE deploy_script
-            NO_UNSUPPORTED_PLATFORM_ERROR
-        )
-    else()
-        qt_generate_deploy_app_script(
-            TARGET PDFutils-gui
-            OUTPUT_SCRIPT deploy_script
-            NO_UNSUPPORTED_PLATFORM_ERROR
-        )
-    endif()
+    qt_generate_deploy_app_script(
+        TARGET PDFutils-gui
+        FILENAME_VARIABLE deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR
+    )
 
     install(SCRIPT ${deploy_script})
 else()
