@@ -1,17 +1,10 @@
-name: ci
-
-on:
-  pull_request:
-  push:
-    branches: [ main ]
-
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -25,8 +18,13 @@ jobs:
             qt6-tools-dev \
             qt6-tools-dev-tools
 
+      - name: Debug Qt installation
+        run: |
+          dpkg -l | grep -E 'qt6|qtbase|linguist' || true
+          find /usr -name Qt6Config.cmake -o -name qt6-config.cmake -o -name Qt5Config.cmake -o -name qt5-config.cmake
+
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake
 
       - name: Build
         run: cmake --build build
