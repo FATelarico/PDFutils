@@ -192,7 +192,9 @@ void drawTocPage(
     }
 
     const int firstEntry = tocPageIndex * rowsPerTocPage;
-    const int lastEntryExclusive = std::min(firstEntry + rowsPerTocPage, entries.size());
+    // const int lastEntryExclusive = std::min(firstEntry + rowsPerTocPage, entries.size());
+    const int lastEntryExclusive =
+        std::min(firstEntry + rowsPerTocPage, static_cast<int>(entries.size()));
     const qreal rowHeight = entryMetrics.height() + (10.0 * pointsToDeviceScale);
     const qreal pageNumberColumnWidth = 52.0 * pointsToDeviceScale;
     const qreal gap = 8.0 * pointsToDeviceScale;
@@ -273,8 +275,8 @@ bool drawImagePage(
     reader.setAutoTransform(options.autoRotateFromMetadata);
 #endif
 
-    const QImage image = reader.read();
-
+    // const QImage image = reader.read();
+    QImage image = reader.read();
     if (image.isNull()) {
         error = QObject::tr("Could not read image '%1': %2")
             .arg(entry.imagePath, reader.errorString());

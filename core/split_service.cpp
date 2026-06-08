@@ -387,7 +387,8 @@ void collectBookmarkTargetPagesByLevel(
     std::map<int, QVector<int>>& targetPagesByLevel)
 {
     for (QPDFOutlineObjectHelper outline : outlines) {
-        const QPDFObjectHandle destPage = outline.getDestPage();
+        // const QPDFObjectHandle destPage = outline.getDestPage();
+        QPDFObjectHandle destPage = outline.getDestPage();
 
         if (!destPage.isNull()) {
             const auto pageIt = pageNumberByObject.find(qpdfObjectKey(destPage));
@@ -531,7 +532,8 @@ bool determineSplitRangesFromBookmarksForOnePdf(
         const QByteArray inputFileName = toQpdfFileName(cleanPath);
         pdf.processFile(inputFileName.constData());
 
-        QPDFOutlineDocumentHelper& outlineHelper = QPDFOutlineDocumentHelper::get(pdf);
+        // QPDFOutlineDocumentHelper& outlineHelper = QPDFOutlineDocumentHelper::get(pdf);
+        QPDFOutlineDocumentHelper outlineHelper(pdf);
 
         if (!outlineHelper.hasOutlines()) {
             error = "The PDF has no bookmarks.";
