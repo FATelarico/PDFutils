@@ -467,23 +467,32 @@ add_test(
 )
 
 # -----------------------------------------------------------------------------
-# Optional Linux desktop launcher and icon.
+# Generate a Qt deployment script only when the Qt/CMake package provides
+# qt_generate_deploy_app_script. Some Qt versions and Qt5 builds do not.
+# Optional: Linux desktop launcher and icon.
 # -----------------------------------------------------------------------------
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.png")
-    install(FILES media/pdfutils.png
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
-        RENAME pdfutils.png
-    )
-endif()
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_generate_deploy_app_script(
-        TARGET PDFutils-gui
-        OUTPUT_SCRIPT deploy_script
-        NO_UNSUPPORTED_PLATFORM_ERROR
-    )
+if(QT_VERSION_MAJOR EQUAL 6 AND COMMAND qt_generate_deploy_app_script)
+    if(Qt6_VERSION VERSION_LESS 6.5)
+        qt_generate_deploy_app_script(
+            TARGET PDFutils-gui
+            FILENAME_VARIABLE deploy_script
+            NO_UNSUPPORTED_PLATFORM_ERROR
+        )
+    else()
+        qt_generate_deploy_app_script(
+            TARGET PDFutils-gui
+            OUTPUT_SCRIPT deploy_script
+            NO_UNSUPPORTED_PLATFORM_ERROR
+        )
+    endif()
 
     install(SCRIPT ${deploy_script})
+else()
+    message(STATUS "Qt deploy script generation not available; skipping")
+endif()
+
+if(COMMAND qt_finalize_executable)
     qt_finalize_executable(PDFutils-gui)
 endif()
 
@@ -509,7 +518,7 @@ if(UNIX AND NOT APPLE)
     )
 else()
     install(FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE-docs"
+        "${CMAKE_CURRENT_SOURCE_DIR}/LICENCEdocs"
         "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/PDFutils
     )
