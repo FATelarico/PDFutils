@@ -3,6 +3,32 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
+#include <QLibraryInfo>
+#include <QLocale>
+#include <QtGlobal>
+
+namespace
+{
+void appendUniquePath(QStringList& paths, const QString& path)
+{
+    if (path.trimmed().isEmpty())
+        return;
+
+    const QString cleanedPath = QDir::cleanPath(path);
+
+    if (!paths.contains(cleanedPath))
+        paths.append(cleanedPath);
+}
+
+QString qtTranslationsPath()
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+#else
+    return QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+#endif
+}
+}
 
 LanguageManager& LanguageManager::instance()
 {
@@ -13,6 +39,8 @@ LanguageManager& LanguageManager::instance()
 LanguageManager::LanguageManager(QObject* parent)
     : QObject(parent)
 {
+    m_qtTranslator = new QTranslator(this);
+    m_translator = new QTranslator(this);
 }
 
 QString LanguageManager::currentLocale() const
@@ -20,50 +48,103 @@ QString LanguageManager::currentLocale() const
     return m_currentLocale;
 }
 
-QString LanguageManager::translationsDir() const
+QStringList LanguageManager::translationSearchPaths() const
 {
+    QStringList paths;
     const QString appDir = QCoreApplication::applicationDirPath();
 
-    // Development tree: build/translations
-    const QString devPath = QDir(appDir).absoluteFilePath("../translations");
-    if (QDir(devPath).exists()) {
-        return QDir(devPath).canonicalPath();
+    appendUniquePath(paths, QDir(appDir).absoluteFilePath("translations"));
+    appendUniquePath(paths, QDir(appDir).absoluteFilePath("../translations"));
+    appendUniquePath(paths, QDir(appDir).absoluteFilePath("../Resources/translations"));
+    appendUniquePath(paths, QDir(appDir).absoluteFilePath("../share/pdfutils/translations"));
+
+    return paths;
+}
+
+QString LanguageManager::translationDirectory() const
+{
+    for (const QString& path : translationSearchPaths()) {
+        const QDir directory(path);
+
+        if (directory.exists())
+            return directory.canonicalPath();
     }
 
-    // Installed Linux layout, for example:
-    // /usr/bin/PDFutils-gui
-    // /usr/share/pdfutils/translations/PDFutils_it_IT.qm
-    const QString installedPath = QDir(appDir).absoluteFilePath("../share/pdfutils/translations");
-    if (QDir(installedPath).exists()) {
-        return QDir(installedPath).canonicalPath();
+    return QString();
+}
+
+QStringList LanguageManager::qtTranslationSearchPaths() const
+{
+    QStringList paths;
+
+    appendUniquePath(paths, translationDirectory());
+    appendUniquePath(paths, qtTranslationsPath());
+
+    return paths;
+}
+
+bool LanguageManager::initializeFromUiLanguages(const QStringList& uiLanguages)
+{
+    for (const QString& uiLanguage : uiLanguages) {
+        const QString localeName = QLocale(uiLanguage).name();
+
+        if (localeName.isEmpty() || localeName == "C")
+            continue;
+
+        if (setLanguage(localeName))
+            return true;
     }
 
-    return appDir;
+    return setLanguage(QStringLiteral("en_GB"));
 }
 
 bool LanguageManager::setLanguage(const QString& localeName)
 {
-    qApp->removeTranslator(&m_translator);
-    m_translator = QTranslator();
+    qApp->removeTranslator(m_translator);
+    qApp->removeTranslator(m_qtTranslator);
+
+    delete m_translator;
+    delete m_qtTranslator;
+
+    m_translator = new QTranslator(this);
+    m_qtTranslator = new QTranslator(this);
+
+    const QString normalisedLocaleName = QLocale(localeName).name();
+    const QLocale locale(normalisedLocaleName);
 
     // Source language: British English.
     // No .qm file needed; Qt falls back to the original tr() strings.
-    if (localeName == "en_GB" || localeName == "en" || localeName.isEmpty()) {
+    if (normalisedLocaleName.isEmpty() || locale.language() == QLocale::English) {
         m_currentLocale = "en_GB";
         emit languageChanged();
         return true;
     }
 
-    const QString fileName = "PDFutils_" + localeName;
+    bool appTranslationLoaded = false;
 
-    if (!m_translator.load(fileName, translationsDir())) {
+    for (const QString& path : translationSearchPaths()) {
+        if (m_translator->load(locale, QStringLiteral("PDFutils"), QStringLiteral("_"), path)) {
+            appTranslationLoaded = true;
+            break;
+        }
+    }
+
+    if (!appTranslationLoaded) {
         m_currentLocale = "en_GB";
         emit languageChanged();
         return false;
     }
 
-    qApp->installTranslator(&m_translator);
-    m_currentLocale = localeName;
+    for (const QString& path : qtTranslationSearchPaths()) {
+        if (m_qtTranslator->load(locale, QStringLiteral("qtbase"), QStringLiteral("_"), path))
+            break;
+    }
+
+    if (!m_qtTranslator->isEmpty())
+        qApp->installTranslator(m_qtTranslator);
+
+    qApp->installTranslator(m_translator);
+    m_currentLocale = normalisedLocaleName;
     emit languageChanged();
 
     return true;

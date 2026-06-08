@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "../updates/github_release_parser.h"
+#include "language_manager.h"
+#include "release_metadata.h"
+#include "../updates/github_update_checker.h"
 #include "merge.h"
 #include "split.h"
 #include "extract.h"
@@ -10,31 +12,42 @@
 #include "./ui_langselector.h"
 
 #include <QDialog>
-#include <QDir>
-#include <QNetworkAccessManager>
 #include <QEvent>
 
 #include <QDebug>
 
 #include <QSettings>
 #include <QDateTime>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QMessageBox>
-#include <QNetworkReply>
-#include <QNetworkRequest>
 #include <QPushButton>
 #include <QUrl>
+
+namespace
+{
+QString releaseTypeText(const GitHubReleaseInfo& release)
+{
+    return release.prerelease
+               ? QCoreApplication::translate("MainWindow", "pre-release")
+               : QCoreApplication::translate("MainWindow", "full release");
+}
+
+QString isoDateOrUnknown(const QDateTime& dateTime)
+{
+    if (!dateTime.isValid())
+        return QCoreApplication::translate("MainWindow", "unknown");
+
+    return dateTime.toUTC().date().toString(Qt::ISODate);
+}
+}
 
 void MainWindow::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange) {
         ui->retranslateUi(this);
+        updateVersionMenuText();
         updateReleaseChannelActionText();
     }
 
@@ -46,8 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
-
+    updateVersionMenuText();
 
     loadReleaseChannelPreference();
 
@@ -112,6 +124,14 @@ MainWindow::MainWindow(QWidget *parent)
     });
 }
 
+void MainWindow::updateVersionMenuText()
+{
+    const QString versionText =
+        tr("Version %1").arg(QStringLiteral(PDFUTILS_DISPLAY_VERSION));
+
+    ui->menuVerify_updates->setTitle(versionText);
+    ui->label00->setText(versionText);
+}
 
 void MainWindow::on_link00c_triggered()
 {
@@ -125,242 +145,94 @@ void MainWindow::on_link00c_triggered()
                              : "stable / prereleases ignored");
 }
 
-void MainWindow::on_link00_triggered(){
-        qDebug() << "[link00a] QAction triggered";
-
-        const QString owner = "fatelarico";
-        const QString repo  = "PDFutils"; // "InView-Highlighter";
-
-        if (!networkManager)
-            networkManager = new QNetworkAccessManager(this);
-
-        const QUrl apiUrl(
-            QString("https://api.github.com/repos/%1/%2/releases?per_page=100")
-                .arg(owner, repo)
-            );
-
-        QNetworkRequest request(apiUrl);
-        request.setHeader(QNetworkRequest::UserAgentHeader, "PDFutils");
-        request.setRawHeader("Accept", "application/vnd.github+json");
-        request.setRawHeader("X-GitHub-Api-Version", "2022-11-28");
-
-        QNetworkReply *reply = networkManager->get(request);
-
-        connect(reply, &QNetworkReply::finished, this, [this, reply, owner, repo]() {
-            const auto networkError = reply->error();
-            const QString errorString = reply->errorString();
-
-            const int httpStatus =
-                reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-            const QByteArray data = reply->readAll();
-
-            reply->deleteLater();
-
-            qDebug() << "[GitHub] HTTP status:" << httpStatus;
-            qDebug() << "[GitHub] Network error:" << networkError;
-            qDebug() << "[GitHub] Error string:" << errorString;
-            qDebug() << "[GitHub] Response size:" << data.size();
-
-            if (networkError != QNetworkReply::NoError || httpStatus < 200 || httpStatus >= 300) {
-                QMessageBox::warning(
-                    this,
-                    tr("GitHub request failed"),
-                    tr("Could not retrieve GitHub releases.\n\nHTTP status: %1\n%2")
-                        .arg(httpStatus)
-                        .arg(errorString)
-                    );
-                return;
-            }
-
-            QJsonParseError parseError;
-            const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
-
-            if (parseError.error != QJsonParseError::NoError || !doc.isArray()) {
-                QMessageBox::warning(
-                    this,
-                    tr("Invalid GitHub response"),
-                    tr("The GitHub releases response could not be parsed.")
-                    );
-                return;
-            }
-
-            const QJsonArray releases = doc.array();
-
-            const GitHubReleaseInfo latestRelease = latestReleaseFromJson(releases, WantsPrerel);
-
-            if (!latestRelease.isValid()) {
-                QMessageBox::information(
-                    this,
-                    tr("No release found"),
-                    tr("No valid GitHub release was found for %1/%2.")
-                        .arg(owner, repo)
-                    );
-                return;
-            }
-
-            const QString currentVersion = QCoreApplication::applicationVersion().isEmpty()
-                                               ? tr("unknown")
-                                               : QCoreApplication::applicationVersion();
-
-            GitHubReleaseInfo currentRelease =
-                releaseForCurrentVersionFromJson(releases, currentVersion, WantsPrerel);
-
-            bool currentReleaseDateFromApi = currentRelease.isValid();
-
-            QDateTime currentReleaseDate;
-
-            if (currentReleaseDateFromApi) {
-                currentReleaseDate = currentRelease.publishedAt;
-            } else {
-                currentReleaseDate =
-                    QDateTime::fromString(QStringLiteral(APP_RELEASE_DATE), Qt::ISODate);
-
-                qDebug() << "[GitHub] Current version release was not found in API response.";
-                qDebug() << "[GitHub] Using hard-coded APP_RELEASE_DATE:"
-                         << currentReleaseDate.toString(Qt::ISODate);
-            }
-
-            const QString latestReleaseType = latestRelease.prerelease
-                                                  ? tr("pre-release")
-                                                  : tr("full release");
-
-            const QDate currentReleaseDay = currentReleaseDate.toUTC().date();
-            const QDate latestReleaseDay = latestRelease.publishedAt.toUTC().date();
-
-            const bool updateAvailable =
-                currentReleaseDay.isValid() &&
-                latestReleaseDay.isValid() &&
-                latestReleaseDay > currentReleaseDay;
-
-            QString message =
-                tr("Current version: %1\n"
-                   "Current release date: %2%3\n\n"
-                   "Latest release: %4\n"
-                   "Latest release type: %5\n"
-                   "Latest release date: %6")
-                    .arg(currentVersion,
-                                       currentReleaseDay.isValid()
-                                           ? currentReleaseDay.toString(Qt::ISODate)
-                                           : tr("unknown"),
-                                       currentReleaseDateFromApi
-                                           ? tr("(API)")
-                                           : tr(""),
-                                       latestRelease.tag,
-                                       latestReleaseType,
-                                       latestReleaseDay.toString(Qt::ISODate));
-
-            if (updateAvailable) {
-                message += tr("\n\nAn update is available.");
-            } else {
-                message += tr("\n\nYou are using the latest available release.");
-            }
-
-            QMessageBox box(this);
-            box.setWindowTitle(tr("Release check"));
-            box.setText(message);
-            box.setIcon(QMessageBox::Information);
-
-            QPushButton *updateButton = nullptr;
-
-            if (updateAvailable) {
-                updateButton = box.addButton(tr("Update"), QMessageBox::AcceptRole);
-            }
-
-            box.addButton(QMessageBox::Close);
-
-            box.exec();
-
-            if (updateButton && box.clickedButton() == updateButton) {
-                QString releaseUrl = latestRelease.htmlUrl;
-
-                if (releaseUrl.isEmpty()) {
-                    releaseUrl = QString("https://github.com/%1/%2/releases/tag/%3")
-                    .arg(owner, repo, latestRelease.tag);
-                }
-
-                qDebug() << "[GitHub] Opening latest release page:" << releaseUrl;
-
-                const bool opened = QDesktopServices::openUrl(QUrl(releaseUrl));
-
-                if (!opened) {
-                    QMessageBox::warning(
-                        this,
-                        tr("Browser error"),
-                        tr("Could not open the latest release page:\n%1").arg(releaseUrl)
-                        );
-                }
-            }
-        });
-    }
-
-QString MainWindow::translationsDirectory() const
+void MainWindow::on_link00_triggered()
 {
-    const QString appDir = QCoreApplication::applicationDirPath();
+    qDebug() << "[link00a] QAction triggered";
 
-    const QString buildTranslations =
-        QDir(appDir).absoluteFilePath("translations");
+    GitHubUpdateCheckOptions options;
+    options.owner = QStringLiteral(PDFUTILS_GITHUB_OWNER);
+    options.repo = QStringLiteral(PDFUTILS_GITHUB_REPO);
+    options.currentVersion = QCoreApplication::applicationVersion();
+    options.fallbackCurrentReleaseDate =
+        QDateTime::fromString(QStringLiteral(PDFUTILS_RELEASE_DATE), Qt::ISODate);
+    options.includePrereleases = WantsPrerel;
+    options.userAgent =
+        QStringLiteral("PDFutils-gui/%1").arg(QStringLiteral(PDFUTILS_DISPLAY_VERSION));
 
-    if (QDir(buildTranslations).exists()) {
-        return QDir(buildTranslations).canonicalPath();
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    const GitHubUpdateCheckResult result = checkGitHubForUpdates(options);
+    QApplication::restoreOverrideCursor();
+
+    if (!result.ok) {
+        QMessageBox::warning(
+            this,
+            tr("GitHub request failed"),
+            result.errorMessage
+        );
+        return;
     }
 
-    const QString parentBuildTranslations =
-        QDir(appDir).absoluteFilePath("../translations");
+    QString message =
+        tr("Current version: %1\n"
+           "Current release date: %2%3\n\n"
+           "Latest release: %4\n"
+           "Latest release type: %5\n"
+           "Latest release date: %6")
+            .arg(result.currentVersion,
+                 isoDateOrUnknown(result.currentReleaseDate),
+                 result.currentReleaseDateFromApi ? tr(" (API)") : QString(),
+                 result.latestRelease.tag,
+                 releaseTypeText(result.latestRelease),
+                 isoDateOrUnknown(result.latestRelease.publishedAt));
 
-    if (QDir(parentBuildTranslations).exists()) {
-        return QDir(parentBuildTranslations).canonicalPath();
+    if (result.updateAvailable) {
+        message += tr("\n\nAn update is available.");
+    } else {
+        message += tr("\n\nYou are using the latest available release.");
     }
 
-    const QString installedTranslations =
-        QDir(appDir).absoluteFilePath("../share/pdfutils/translations");
+    QMessageBox box(this);
+    box.setWindowTitle(tr("Release check"));
+    box.setText(message);
+    box.setIcon(QMessageBox::Information);
 
-    if (QDir(installedTranslations).exists()) {
-        return QDir(installedTranslations).canonicalPath();
+    QPushButton* updateButton = nullptr;
+
+    if (result.updateAvailable)
+        updateButton = box.addButton(tr("Update"), QMessageBox::AcceptRole);
+
+    box.addButton(QMessageBox::Close);
+    box.exec();
+
+    if (!updateButton || box.clickedButton() != updateButton)
+        return;
+
+    const QString releaseUrl = result.latestReleaseUrl.toString();
+    qDebug() << "[GitHub] Opening latest release page:" << releaseUrl;
+
+    const bool opened = QDesktopServices::openUrl(QUrl(releaseUrl));
+
+    if (!opened) {
+        QMessageBox::warning(
+            this,
+            tr("Browser error"),
+            tr("Could not open the latest release page:\n%1").arg(releaseUrl)
+        );
     }
-
-    return appDir;
 }
 
 bool MainWindow::applyLanguage(const QString& languageCode)
 {
-    const QString normalisedLanguageCode = languageCode.trimmed();
-
-    qApp->removeTranslator(&appTranslator);
-
-    if (normalisedLanguageCode == "en_GB" ||
-        normalisedLanguageCode == "en" ||
-        normalisedLanguageCode.isEmpty()) {
-        currentLanguageCode = "en_GB";
-        ui->retranslateUi(this);
-        updateReleaseChannelActionText();
-        return true;
-    }
-
-    const QString translationBaseName =
-        QStringLiteral("PDFutils_") + normalisedLanguageCode;
-
-    const QString translationDir = translationsDirectory();
-
-    if (!appTranslator.load(translationBaseName, translationDir)) {
+    if (!LanguageManager::instance().setLanguage(languageCode)) {
         QMessageBox::warning(
             this,
             tr("Language not available"),
-            tr("Could not load the translation file:\n%1.qm\n\nSearched in:\n%2")
-                .arg(translationBaseName, translationDir)
-            );
-
-        currentLanguageCode = "en_GB";
-        ui->retranslateUi(this);
-        updateReleaseChannelActionText();
+            tr("Could not load the translation files for locale %1.\n\nSearched in:\n%2")
+                .arg(QLocale(languageCode).name(),
+                     LanguageManager::instance().translationSearchPaths().join("\n"))
+        );
         return false;
     }
-
-    qApp->installTranslator(&appTranslator);
-
-    currentLanguageCode = normalisedLanguageCode;
-    ui->retranslateUi(this);
-    updateReleaseChannelActionText();
 
     return true;
 }
@@ -371,7 +243,7 @@ void MainWindow::on_link00f_triggered()
     Ui::LangSelector languageUi;
     languageUi.setupUi(&dialog);
 
-    if (currentLanguageCode == "it_IT") {
+    if (LanguageManager::instance().currentLocale() == "it_IT") {
         languageUi.combo49->setCurrentIndex(1);
     } else {
         languageUi.combo49->setCurrentIndex(0);

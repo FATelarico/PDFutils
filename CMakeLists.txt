@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(PDFutils VERSION 0.4.0 LANGUAGES CXX)
+project(PDFutils VERSION 0.4.1 LANGUAGES CXX)
 
 set(PDFUTILS_PRERELEASE "beta")
 set(PDFUTILS_DISPLAY_VERSION "${PROJECT_VERSION}-${PDFUTILS_PRERELEASE}")
 set(PDFUTILS_DEBIAN_VERSION "${PROJECT_VERSION}~${PDFUTILS_PRERELEASE}")
+set(PDFUTILS_RELEASE_DATE "2026-05-01T00:00:00Z")
+set(PDFUTILS_GITHUB_OWNER "fatelarico")
+set(PDFUTILS_GITHUB_REPO "PDFutils")
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -14,6 +17,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(GNUInstallDirs)
+
+set(PDFUTILS_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${PDFUTILS_GENERATED_INCLUDE_DIR}")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/release_metadata.h.in"
+    "${PDFUTILS_GENERATED_INCLUDE_DIR}/release_metadata.h"
+    @ONLY
+)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets LinguistTools Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets LinguistTools Network)
@@ -101,6 +112,7 @@ add_library(PDFutils_updates STATIC
 
 target_include_directories(PDFutils_updates PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/updates
+    ${PDFUTILS_GENERATED_INCLUDE_DIR}
 )
 
 target_link_libraries(PDFutils_updates PUBLIC
@@ -149,6 +161,9 @@ set(GUI_SOURCES
 
     gui/helptexts.cpp
     gui/helptexts.h
+
+    gui/language_manager.cpp
+    gui/language_manager.h
 
     gui/langselector.ui
     gui/langselector.cpp
@@ -241,6 +256,46 @@ if(NOT PDFUTILS_LRELEASE_EXECUTABLE)
     message(FATAL_ERROR "Could not find Qt lrelease. Install the Qt LinguistTools package for the selected Qt version.")
 endif()
 
+find_program(PDFUTILS_QMAKE_EXECUTABLE
+    NAMES qmake-qt${QT_VERSION_MAJOR} qmake6 qmake
+)
+
+set(PDFUTILS_QT_TRANSLATIONS_DIR "")
+
+if(PDFUTILS_QMAKE_EXECUTABLE)
+    execute_process(
+        COMMAND "${PDFUTILS_QMAKE_EXECUTABLE}" -query QT_INSTALL_TRANSLATIONS
+        OUTPUT_VARIABLE PDFUTILS_QT_TRANSLATIONS_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+
+set(PDFUTILS_QT_TRANSLATION_FILES)
+
+if(PDFUTILS_QT_TRANSLATIONS_DIR)
+    foreach(_ts_file IN LISTS TS_FILES)
+        get_filename_component(_ts_name "${_ts_file}" NAME_WE)
+        string(REGEX REPLACE "^PDFutils_" "" _locale_name "${_ts_name}")
+
+        set(_qt_translation_candidates "qtbase_${_locale_name}.qm")
+
+        if(_locale_name MATCHES "^([A-Za-z]+)[_-].*")
+            list(APPEND _qt_translation_candidates "qtbase_${CMAKE_MATCH_1}.qm")
+        endif()
+
+        foreach(_qt_translation_candidate IN LISTS _qt_translation_candidates)
+            if(EXISTS "${PDFUTILS_QT_TRANSLATIONS_DIR}/${_qt_translation_candidate}")
+                list(APPEND PDFUTILS_QT_TRANSLATION_FILES
+                    "${PDFUTILS_QT_TRANSLATIONS_DIR}/${_qt_translation_candidate}"
+                )
+                break()
+            endif()
+        endforeach()
+    endforeach()
+
+    list(REMOVE_DUPLICATES PDFUTILS_QT_TRANSLATION_FILES)
+endif()
+
 add_custom_target(PDFutils_lupdate
     COMMAND ${PDFUTILS_LUPDATE_EXECUTABLE}
             ${PDFUTILS_TRANSLATION_SOURCES}
@@ -283,14 +338,30 @@ add_dependencies(update_translations PDFutils_lupdate)
 add_custom_target(release_translations)
 add_dependencies(release_translations PDFutils_lrelease)
 
+if(APPLE)
+    set(PDFUTILS_TRANSLATIONS_INSTALL_DIR "PDFutils-gui.app/Contents/Resources/translations")
+elseif(WIN32)
+    set(PDFUTILS_TRANSLATIONS_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}/translations")
+else()
+    set(PDFUTILS_TRANSLATIONS_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/pdfutils/translations")
+endif()
+
 install(
     DIRECTORY "${PDFUTILS_QM_OUTPUT_DIR}/"
-    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pdfutils/translations"
+    DESTINATION "${PDFUTILS_TRANSLATIONS_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.qm"
 )
 
+if(PDFUTILS_QT_TRANSLATION_FILES)
+    install(
+        FILES ${PDFUTILS_QT_TRANSLATION_FILES}
+        DESTINATION "${PDFUTILS_TRANSLATIONS_INSTALL_DIR}"
+    )
+endif()
+
 target_include_directories(PDFutils-gui
     PRIVATE
+        ${PDFUTILS_GENERATED_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/gui
         ${CMAKE_CURRENT_SOURCE_DIR}/core
 )
@@ -326,19 +397,10 @@ target_link_libraries(PDFutils-cli
 
 target_include_directories(PDFutils-cli
     PRIVATE
+        ${PDFUTILS_GENERATED_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/cli
         ${CMAKE_CURRENT_SOURCE_DIR}/core
 )
-
-function(pdfutils_apply_app_metadata target_name)
-    target_compile_definitions(${target_name} PRIVATE
-        APP_VERSION="${PDFUTILS_DISPLAY_VERSION}"
-        APP_RELEASE_DATE="2026-05-01"
-    )
-endfunction()
-
-pdfutils_apply_app_metadata(PDFutils-gui)
-pdfutils_apply_app_metadata(PDFutils-cli)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
     set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.PDFutils)
@@ -360,6 +422,48 @@ set_target_properties(PDFutils-cli PROPERTIES
 install(TARGETS PDFutils-gui PDFutils-cli
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# -----------------------------------------------------------------------------
+# Add tests for the CLI
+# -----------------------------------------------------------------------------
+
+enable_testing()
+
+add_test(
+    NAME compress_pdfs
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/integration/test_compress.sh
+                 $<TARGET_FILE:PDFutils-cli>
+)
+
+add_test(
+    NAME extract_pdfs
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/integration/test_extract.sh
+                 $<TARGET_FILE:PDFutils-cli>
+)
+
+add_test(
+    NAME convert_to_pdf
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/integration/test_img2pdf.sh
+                 $<TARGET_FILE:PDFutils-cli>
+)
+
+add_test(
+    NAME insert_pdfs
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/integration/test_insert.sh
+                 $<TARGET_FILE:PDFutils-cli>
+)
+
+add_test(
+    NAME merge_pdfs
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/integration/test_merge.sh
+                 $<TARGET_FILE:PDFutils-cli>
+)
+
+add_test(
+    NAME split_pdfs
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/integration/test_split.sh
+                 $<TARGET_FILE:PDFutils-cli>
 )
 
 # -----------------------------------------------------------------------------
@@ -392,15 +496,21 @@ set(CPACK_PACKAGE_VENDOR "FATelarico")
 set(CPACK_PACKAGE_CONTACT "contact.fatelarico@dewdata.com")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Qt GUI and CLI utilities for working with PDF files")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/FATelarico/PDFutils")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE-docs")
 
 if(UNIX AND NOT APPLE)
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/pdfutils
         RENAME copyright
     )
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE-docs"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/pdfutils
+        RENAME LICENCE-docs
+    )
 else()
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE"
+    install(FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE-docs"
+        "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/PDFutils
     )
 endif()

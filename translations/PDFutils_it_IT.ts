@@ -9,22 +9,22 @@
         <translation>Selezione lingua</translation>
     </message>
     <message>
-        <location filename="../gui/langselector.ui" line="71"/>
+        <location filename="../gui/langselector.ui" line="91"/>
         <source>Select a language for the GUI</source>
         <translation>Seleziona una lingua per l&apos;interfaccia grafica</translation>
     </message>
     <message>
-        <location filename="../gui/langselector.ui" line="87"/>
+        <location filename="../gui/langselector.ui" line="155"/>
         <source>English (UK)</source>
         <translation>Inglese (Regno Unito)</translation>
     </message>
     <message>
-        <location filename="../gui/langselector.ui" line="92"/>
+        <location filename="../gui/langselector.ui" line="160"/>
         <source>Italian</source>
         <translation>Italiano</translation>
     </message>
     <message>
-        <location filename="../gui/langselector.ui" line="134"/>
+        <location filename="../gui/langselector.ui" line="217"/>
         <source>Apply</source>
         <translation>Applica</translation>
     </message>
@@ -78,8 +78,14 @@
     </message>
     <message>
         <location filename="../gui/mainwindow.ui" line="1374"/>
-        <source>Version 0.3.0~beta</source>
-        <translation>Versione 0.3.0~beta</translation>
+        <location filename="../gui/mainwindow.ui" line="1402"/>
+        <source>Version</source>
+        <translation>Versione</translation>
+    </message>
+    <message>
+        <location filename="../gui/mainwindow.ui" line="1391"/>
+        <source>Options</source>
+        <translation>Opzioni</translation>
     </message>
     <message>
         <location filename="../gui/mainwindow.ui" line="1384"/>
@@ -87,109 +93,98 @@
         <translation>Strumenti</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1395"/>
-        <source>Version: 0.1.0-alpha</source>
-        <translation>Versione: 0.1.0-alpha</translation>
-    </message>
-    <message>
-        <location filename="../gui/mainwindow.ui" line="1400"/>
+        <location filename="../gui/mainwindow.ui" line="1407"/>
         <source>GitHub</source>
         <translation>GitHub</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1405"/>
+        <location filename="../gui/mainwindow.ui" line="1412"/>
         <source>Install GhostScript</source>
         <translation>Installa Ghostscript</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1410"/>
+        <location filename="../gui/mainwindow.ui" line="1417"/>
         <source>Check out qPDF</source>
         <translation>Scopri qPDF</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1418"/>
+        <location filename="../gui/mainwindow.ui" line="1425"/>
         <source>Allow pre-release</source>
         <translation>Consenti versioni preliminari</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1421"/>
+        <location filename="../gui/mainwindow.ui" line="1428"/>
         <source>Swtich between the stable and pre-release branches for updates</source>
         <translation>Passa dal ramo stabile a quello preliminare per gli aggiornamenti</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1429"/>
+        <location filename="../gui/mainwindow.ui" line="1436"/>
         <source>Check for updates</source>
         <translation>Cerca aggiornamenti</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1437"/>
+        <location filename="../gui/mainwindow.ui" line="1444"/>
         <source>English (UK)</source>
         <translation>Inglese (Regno Unito)</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1445"/>
+        <location filename="../gui/mainwindow.ui" line="1452"/>
         <source>Italian</source>
         <translation>Italiano</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.ui" line="1450"/>
+        <location filename="../gui/mainwindow.ui" line="1457"/>
         <source>Lanugage</source>
         <translation>Lingua</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="168"/>
+        <location filename="../gui/mainwindow.cpp" line="169"/>
         <source>GitHub request failed</source>
         <translation>Richiesta a GitHub non riuscita</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="169"/>
         <source>Could not retrieve GitHub releases.
 
 HTTP status: %1
 %2</source>
-        <translation>Impossibile recuperare le release da GitHub.
+        <translation type="vanished">Impossibile recuperare le release da GitHub.
 
 Stato HTTP: %1
 %2</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="182"/>
         <source>Invalid GitHub response</source>
-        <translation>Risposta non valida da GitHub</translation>
+        <translation type="vanished">Risposta non valida da GitHub</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="183"/>
         <source>The GitHub releases response could not be parsed.</source>
-        <translation>Impossibile interpretare la risposta delle release di GitHub.</translation>
+        <translation type="vanished">Impossibile interpretare la risposta delle release di GitHub.</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="195"/>
         <source>No release found</source>
-        <translation>Nessuna release trovata</translation>
+        <translation type="vanished">Nessuna release trovata</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="196"/>
         <source>No valid GitHub release was found for %1/%2.</source>
-        <translation>Nessuna release GitHub valida trovata per %1/%2.</translation>
+        <translation type="vanished">Nessuna release GitHub valida trovata per %1/%2.</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="203"/>
-        <location filename="../gui/mainwindow.cpp" line="245"/>
+        <location filename="../gui/mainwindow.cpp" line="40"/>
         <source>unknown</source>
         <translation>sconosciuto</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="225"/>
+        <location filename="../gui/mainwindow.cpp" line="33"/>
         <source>pre-release</source>
         <translation>versione preliminare</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="226"/>
+        <location filename="../gui/mainwindow.cpp" line="34"/>
         <source>full release</source>
         <translation>versione stabile</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="237"/>
+        <location filename="../gui/mainwindow.cpp" line="176"/>
         <source>Current version: %1
 Current release date: %2%3
 
@@ -204,12 +199,21 @@ Tipo di release: %5
 Data di rilascio ultima release: %6</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="247"/>
         <source>(API)</source>
-        <translation>(API)</translation>
+        <translation type="vanished">(API)</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="254"/>
+        <location filename="../gui/mainwindow.cpp" line="130"/>
+        <source>Version %1</source>
+        <translation>Versione %1</translation>
+    </message>
+    <message>
+        <location filename="../gui/mainwindow.cpp" line="183"/>
+        <source> (API)</source>
+        <translation> (API)</translation>
+    </message>
+    <message>
+        <location filename="../gui/mainwindow.cpp" line="189"/>
         <source>
 
 An update is available.</source>
@@ -218,7 +222,7 @@ An update is available.</source>
 È disponibile un aggiornamento.</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="256"/>
+        <location filename="../gui/mainwindow.cpp" line="191"/>
         <source>
 
 You are using the latest available release.</source>
@@ -227,41 +231,39 @@ You are using the latest available release.</source>
 Stai usando l’ultima release disponibile.</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="260"/>
+        <location filename="../gui/mainwindow.cpp" line="195"/>
         <source>Release check</source>
         <translation>Controllo release</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="267"/>
+        <location filename="../gui/mainwindow.cpp" line="202"/>
         <source>Update</source>
         <translation>Aggiorna</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="289"/>
+        <location filename="../gui/mainwindow.cpp" line="218"/>
         <source>Browser error</source>
         <translation>Errore del browser</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="290"/>
+        <location filename="../gui/mainwindow.cpp" line="219"/>
         <source>Could not open the latest release page:
 %1</source>
         <translation>Impossibile aprire la pagina dell&apos;ultima release:
 %1</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="348"/>
+        <location filename="../gui/mainwindow.cpp" line="229"/>
         <source>Language not available</source>
         <translation>Lingua non disponibile</translation>
     </message>
     <message>
-        <location filename="../gui/mainwindow.cpp" line="349"/>
-        <source>Could not load the translation file:
-%1.qm
+        <location filename="../gui/mainwindow.cpp" line="230"/>
+        <source>Could not load the translation files for locale %1.
 
 Searched in:
 %2</source>
-        <translation>Impossibile caricare il file di traduzione:
-%1.qm
+        <translation>Impossibile caricare i file di traduzione per la lingua %1.
 
 Cercato in:
 %2</translation>
@@ -1324,7 +1326,7 @@ Sovrascriverlo?</translation>
     <message>
         <location filename="../gui/merge.ui" line="833"/>
         <source>Page ranges</source>
-        <translation type="unfinished">Pagine</translation>
+        <translation>Intervalli di pagine</translation>
     </message>
     <message>
         <location filename="../gui/merge.ui" line="874"/>

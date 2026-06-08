@@ -157,18 +157,29 @@ GitHubUpdateCheckResult checkGitHubForUpdates(
     if (!result.currentReleaseDate.isValid()) {
         result.errorMessage =
             QStringLiteral(
-                "Current release date is unknown. Define APP_RELEASE_DATE or tag the current version on GitHub."
+                "Current release date is unknown. Set release metadata or tag the current version on GitHub."
             );
         return result;
     }
 
-    const QDate currentReleaseDay = result.currentReleaseDate.toUTC().date();
-    const QDate latestReleaseDay = result.latestRelease.publishedAt.toUTC().date();
+    bool versionComparisonOk = false;
+    const int versionComparison = compareReleaseTags(
+        result.latestRelease.tag,
+        result.currentVersion,
+        &versionComparisonOk
+    );
 
-    result.updateAvailable =
-        currentReleaseDay.isValid() &&
-        latestReleaseDay.isValid() &&
-        latestReleaseDay > currentReleaseDay;
+    if (versionComparisonOk) {
+        result.updateAvailable = versionComparison > 0;
+    } else {
+        const QDate currentReleaseDay = result.currentReleaseDate.toUTC().date();
+        const QDate latestReleaseDay = result.latestRelease.publishedAt.toUTC().date();
+
+        result.updateAvailable =
+            currentReleaseDay.isValid() &&
+            latestReleaseDay.isValid() &&
+            latestReleaseDay > currentReleaseDay;
+    }
 
     result.ok = true;
     return result;

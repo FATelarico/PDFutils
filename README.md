@@ -103,6 +103,7 @@ PDFutils/
 │   ├── split.cpp
 │   ├── split.h
 │   └── split.ui
+├── LICENSE
 ├── LICENCE
 ├── main.cpp
 ├── media
@@ -568,7 +569,13 @@ The GUI includes language-selection support through the language selector.
 
 ## Licence
 
-PDFutils is distributed under the CC-BY-NC-SA International 4.0 licence included in the `LICENCE` file.
+PDFutils uses split licensing:
 
-The packaging configuration installs this licence file with the application package.
+- Source code, build files, packaging scripts, and translation source files are licensed under the GNU Affero General Public License v3.0 or later. See `LICENCE-docs`.
+- Documentation, including `README.md`, is licensed under Creative Commons Attribution-ShareAlike 4.0 International. See `LICENCE`.
 
+Unless a file says otherwise, treat prose documentation as CC-BY-SA-4.0 and software source as AGPL-3.0-or-later.
+
+Third-party names, logos, and trademarks remain subject to their respective owners' rights and are not relicensed by this notice.
+
+The packaging configuration installs the software licence with the application package and installs the documentation licence alongside it.

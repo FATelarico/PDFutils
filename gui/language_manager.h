@@ -1,8 +1,9 @@
 #pragma once
 
 #include <QObject>
-#include <QTranslator>
 #include <QString>
+#include <QStringList>
+#include <QTranslator>
 
 class LanguageManager : public QObject
 {
@@ -12,6 +13,9 @@ public:
     static LanguageManager& instance();
 
     QString currentLocale() const;
+    QString translationDirectory() const;
+    QStringList translationSearchPaths() const;
+    bool initializeFromUiLanguages(const QStringList& uiLanguages);
     bool setLanguage(const QString& localeName);
 
 signals:
@@ -20,8 +24,9 @@ signals:
 private:
     explicit LanguageManager(QObject* parent = nullptr);
 
-    QString translationsDir() const;
+    QStringList qtTranslationSearchPaths() const;
 
-    QTranslator m_translator;
+    QTranslator* m_qtTranslator = nullptr;
+    QTranslator* m_translator = nullptr;
     QString m_currentLocale = "en_GB";
 };

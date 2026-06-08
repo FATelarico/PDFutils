@@ -16,6 +16,12 @@ GitHubReleaseInfo releaseForCurrentVersionFromJson(
     bool includePrereleases
 );
 
+int compareReleaseTags(
+    const QString& leftTag,
+    const QString& rightTag,
+    bool* ok = nullptr
+);
+
 bool releaseTagMatchesCurrentVersion(
     const QString &releaseTag,
     const QString &currentVersion

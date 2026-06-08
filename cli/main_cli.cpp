@@ -4,6 +4,7 @@
 #include "insert_service.h"
 #include "compress_service.h"
 #include "image_to_pdf_service.h"
+#include "release_metadata.h"
 #include "../updates/github_update_checker.h"
 
 #include <QCoreApplication>
@@ -12,17 +13,21 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-/*
- * #ifndef APP_VERSION
- * #define APP_VERSION "0.3.0-alpha"
- * #endif
-*/
-
 namespace
 {
+    QString applicationDisplayVersion()
+    {
+        const QString version = QCoreApplication::applicationVersion().trimmed();
+
+        if (!version.isEmpty())
+            return version;
+
+        return QStringLiteral(PDFUTILS_DISPLAY_VERSION);
+    }
+
     void printGeneralUsage(QTextStream& out)
     {
-        out << "PDFutils-cli " << APP_VERSION << Qt::endl;
+        out << "PDFutils-cli " << applicationDisplayVersion() << Qt::endl;
         out << "Usage:" << Qt::endl;
         out << "  PDFutils-cli merge [options] input1.pdf input2.pdf ..." << Qt::endl;
         out << "  PDFutils-cli split [options] input1.pdf input2.pdf ..." << Qt::endl;
@@ -1249,13 +1254,14 @@ namespace
         }
 
         GitHubUpdateCheckOptions options;
-        options.owner = QStringLiteral("fatelarico");
-        options.repo = QStringLiteral("PDFutils");
+        options.owner = QStringLiteral(PDFUTILS_GITHUB_OWNER);
+        options.repo = QStringLiteral(PDFUTILS_GITHUB_REPO);
         options.currentVersion = QCoreApplication::applicationVersion();
         options.fallbackCurrentReleaseDate =
-            QDateTime::fromString(QStringLiteral(APP_RELEASE_DATE), Qt::ISODate);
+            QDateTime::fromString(QStringLiteral(PDFUTILS_RELEASE_DATE), Qt::ISODate);
         options.includePrereleases = includePrereleases;
-        options.userAgent = QStringLiteral("PDFutils-cli/%1").arg(APP_VERSION);
+        options.userAgent =
+            QStringLiteral("PDFutils-cli/%1").arg(QStringLiteral(PDFUTILS_DISPLAY_VERSION));
 
         const GitHubUpdateCheckResult result = checkGitHubForUpdates(options);
 
@@ -1294,7 +1300,7 @@ int main(int argc, char* argv[])
 
     QCoreApplication::setApplicationName("PDFutils-cli");
     QCoreApplication::setOrganizationName("FATelarico");
-    QCoreApplication::setApplicationVersion(APP_VERSION);
+    QCoreApplication::setApplicationVersion(QStringLiteral(PDFUTILS_DISPLAY_VERSION));
 
     QTextStream out(stdout);
     QTextStream err(stderr);

@@ -1,14 +1,15 @@
 #pragma once
 
 #include "github_release_info.h"
+#include "release_metadata.h"
 
 #include <QDateTime>
 #include <QString>
 #include <QUrl>
 
 struct GitHubUpdateCheckOptions {
-    QString owner = QStringLiteral("fatelarico");
-    QString repo = QStringLiteral("PDFutils");
+    QString owner = QStringLiteral(PDFUTILS_GITHUB_OWNER);
+    QString repo = QStringLiteral(PDFUTILS_GITHUB_REPO);
 
     QString currentVersion;
     QDateTime fallbackCurrentReleaseDate;

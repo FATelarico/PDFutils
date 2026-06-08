@@ -1371,7 +1371,7 @@ QTimeEdit, QToolBox, QToolBox::tab, QToolBox::tab:selected {
     </property>
     <widget class="QMenu" name="menuVerify_updates">
      <property name="title">
-      <string>Version 0.4.0~beta</string>
+      <string>Version</string>
      </property>
      <addaction name="link00c"/>
      <addaction name="link00"/>
@@ -1399,7 +1399,7 @@ QTimeEdit, QToolBox, QToolBox::tab, QToolBox::tab:selected {
   <widget class="QStatusBar" name="statusbar"/>
   <action name="label00">
    <property name="text">
-    <string>Version: 0.1.0-alpha</string>
+    <string>Version</string>
    </property>
   </action>
   <action name="link00a">
