@@ -1,0 +1,76 @@
+name: build-pdfutils
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            triplet: x64-linux
+          - os: windows-2025
+            triplet: x64-windows
+          - os: macos-15
+            triplet: arm64-osx
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          target: desktop
+          cache: true
+          modules: 'qttools'
+
+      - name: Set up vcpkg and install qpdf
+        shell: pwsh
+        run: |
+          $VcpkgRoot = Join-Path $env:RUNNER_TEMP 'vcpkg'
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git $VcpkgRoot
+
+          if ($IsWindows) {
+            & (Join-Path $VcpkgRoot 'bootstrap-vcpkg.bat')
+            $VcpkgExe = Join-Path $VcpkgRoot 'vcpkg.exe'
+          } else {
+            bash (Join-Path $VcpkgRoot 'bootstrap-vcpkg.sh') -disableMetrics
+            $VcpkgExe = Join-Path $VcpkgRoot 'vcpkg'
+          }
+
+          & $VcpkgExe install "qpdf:${{ matrix.triplet }}"
+          "VCPKG_ROOT=$VcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          $Toolchain = Join-Path $env:VCPKG_ROOT 'scripts/buildsystems/vcpkg.cmake'
+
+          cmake -S . -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE="$Toolchain" `
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Install staged files
+        shell: pwsh
+        run: |
+          $StageDir = Join-Path $PWD 'stage'
+          cmake --install build --config Release --prefix "$StageDir"
+
+      - name: Upload staged install tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDFutils-${{ matrix.os }}
+          path: stage/
