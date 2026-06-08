@@ -18,6 +18,7 @@ jobs:
             cmake \
             ninja-build \
             g++ \
+            libqpdf-dev \
             qpdf \
             poppler-utils \
             qt6-base-dev \
