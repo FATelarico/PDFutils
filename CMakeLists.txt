@@ -466,6 +466,17 @@ add_test(
                  $<TARGET_FILE:PDFutils-cli>
 )
 
+set_tests_properties(
+    compress_pdfs
+    extract_pdfs
+    convert_to_pdf
+    insert_pdfs
+    merge_pdfs
+    split_pdfs
+    PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
 # -----------------------------------------------------------------------------
 # Generate a Qt deployment script only when the Qt/CMake package provides
 # qt_generate_deploy_app_script. Some Qt versions and Qt5 builds do not.

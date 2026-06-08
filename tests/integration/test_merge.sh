@@ -7,9 +7,9 @@ WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
 "$BIN" merge \
-  ".tests/fixtures/blank.pdf" \
-  ".tests/fixtures/testing.pdf" \
-  ".tests/fixtures/blank.pdf" \
+  "tests/fixtures/blank.pdf" \
+  "tests/fixtures/testing.pdf" \
+  "tests/fixtures/blank.pdf" \
   --pages ";1-2;" \
   -o "$WORKDIR/merged.pdf"
 
