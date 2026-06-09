@@ -30,8 +30,18 @@ jobs:
           version: '6.8.3'
           target: desktop
           cache: true
-          modules: 'qttools'
+          # modules: 'qttools'
 
+      - name: Verify Qt LinguistTools
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$QT_ROOT_DIR/bin/lupdate"
+          test -x "$QT_ROOT_DIR/bin/lrelease"
+          find "$QT_ROOT_DIR" -name Qt6LinguistToolsConfig.cmake -print -quit | grep -q .
+          "$QT_ROOT_DIR/bin/lupdate" -version
+          "$QT_ROOT_DIR/bin/lrelease" -version
+          
       - name: Set up vcpkg and install qpdf
         shell: pwsh
         run: |
@@ -73,4 +83,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: PDFutils-${{ matrix.os }}
-          path: stage/
+          path: release/
