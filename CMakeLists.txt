@@ -483,16 +483,19 @@ set_tests_properties(
 # Optional: Linux desktop launcher and icon.
 # -----------------------------------------------------------------------------
 
-if(QT_VERSION_MAJOR EQUAL 6 AND COMMAND qt_generate_deploy_app_script)
+if(QT_VERSION_MAJOR EQUAL 6
+   AND COMMAND qt_generate_deploy_app_script
+   AND (WIN32 OR APPLE)
+)
     qt_generate_deploy_app_script(
         TARGET PDFutils-gui
-        FILENAME_VARIABLE deploy_script
+        OUTPUT_SCRIPT deploy_script
         NO_UNSUPPORTED_PLATFORM_ERROR
     )
 
     install(SCRIPT ${deploy_script})
 else()
-    message(STATUS "Qt deploy script generation not available; skipping")
+    message(STATUS "Qt runtime deployment script disabled for this platform")
 endif()
 
 if(COMMAND qt_finalize_executable)
@@ -507,8 +510,50 @@ set(CPACK_DEBIAN_PACKAGE_VERSION "${PDFUTILS_DEBIAN_VERSION}")
 set(CPACK_PACKAGE_VENDOR "FATelarico")
 set(CPACK_PACKAGE_CONTACT "contact.fatelarico@dewdata.com")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Qt GUI and CLI utilities for working with PDF files")
+set(CPACK_PACKAGE_DESCRIPTION
+"PDFutils provides a Qt graphical application and command-line tool for common
+PDF operations, including merging, splitting, extracting, inserting, compressing
+and converting images to PDF.
+
+The package contains both the desktop GUI executable and the command-line
+interface, together with translations and project licence files.")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/FATelarico/PDFutils")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE-docs")
+
+# Strip installed binaries when CPack creates binary packages.
+set(CPACK_STRIP_FILES TRUE)
+
+# Debian packages should carry a compressed changelog under /usr/share/doc/<pkg>.
+set(PDFUTILS_DEBIAN_CHANGELOG "${CMAKE_CURRENT_BINARY_DIR}/changelog.Debian")
+set(PDFUTILS_DEBIAN_CHANGELOG_GZ "${CMAKE_CURRENT_BINARY_DIR}/changelog.Debian.gz")
+
+file(WRITE "${PDFUTILS_DEBIAN_CHANGELOG}"
+"pdfutils (${PDFUTILS_DEBIAN_VERSION}-1) unstable; urgency=medium
+
+  * Release ${PDFUTILS_DISPLAY_VERSION}.
+
+ -- FATelarico <contact.fatelarico@dewdata.com>  Tue, 09 Jun 2026 17:54:00 +0000
+")
+
+find_program(GZIP_EXECUTABLE gzip REQUIRED)
+
+add_custom_command(
+    OUTPUT "${PDFUTILS_DEBIAN_CHANGELOG_GZ}"
+    COMMAND "${CMAKE_COMMAND}" -E copy
+            "${PDFUTILS_DEBIAN_CHANGELOG}"
+            "${PDFUTILS_DEBIAN_CHANGELOG}.tmp"
+    COMMAND "${GZIP_EXECUTABLE}" -9 -n -f
+            "${PDFUTILS_DEBIAN_CHANGELOG}.tmp"
+    COMMAND "${CMAKE_COMMAND}" -E rename
+            "${PDFUTILS_DEBIAN_CHANGELOG}.tmp.gz"
+            "${PDFUTILS_DEBIAN_CHANGELOG_GZ}"
+    DEPENDS "${PDFUTILS_DEBIAN_CHANGELOG}"
+    VERBATIM
+)
+
+add_custom_target(PDFutils_debian_changelog
+    DEPENDS "${PDFUTILS_DEBIAN_CHANGELOG_GZ}"
+)
 
 if(UNIX AND NOT APPLE)
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE"
@@ -518,6 +563,11 @@ if(UNIX AND NOT APPLE)
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENCE-docs"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/pdfutils
         RENAME LICENCE-docs
+    )
+
+    install(FILES "${PDFUTILS_DEBIAN_CHANGELOG_GZ}"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/pdfutils
+        RENAME changelog.Debian.gz
     )
 else()
     install(FILES
@@ -543,6 +593,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.desktop.in")
         install(FILES "${CMAKE_CURRENT_BINARY_DIR}/media/pdfutils.desktop"
             DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
         )
+        add_dependencies(PDFutils-gui PDFutils_debian_changelog)
+        add_dependencies(PDFutils-cli PDFutils_debian_changelog)
     endif()
 endif()
 
@@ -569,16 +621,19 @@ elseif(APPLE)
     set(CPACK_PACKAGE_NAME "PDFutils")
 elseif(UNIX)
     set(CPACK_GENERATOR "DEB;RPM")
-    set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-or-later")
-    set(CPACK_RPM_PACKAGE_GROUP "Applications/Productivity")
-    set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 
     set(CPACK_PACKAGE_NAME "pdfutils")
+    set(CPACK_PACKAGE_FILE_NAME "pdfutils-${PDFUTILS_DISPLAY_VERSION}-linux-x86_64")
+
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "FATelarico <contact.fatelarico@dewdata.com>")
     set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+
+    set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-or-later")
+    set(CPACK_RPM_PACKAGE_GROUP "Applications/Productivity")
+    set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 endif()
 
 include(CPack)

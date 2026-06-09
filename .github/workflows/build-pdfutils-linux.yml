@@ -266,42 +266,51 @@ jobs:
 
                   if [ -f /app/share/applications/pdfutils.desktop ]; then
                     mv /app/share/applications/pdfutils.desktop /app/share/applications/$FLATPAK_APP_ID.desktop
-                    desktop-file-edit \
-                      --set-key=Exec \
-                      --set-value=$FLATPAK_COMMAND \
-                      --set-key=Icon \
-                      --set-value=$FLATPAK_APP_ID \
-                      /app/share/applications/$FLATPAK_APP_ID.desktop || true
+
+                    sed -i \
+                      -e 's|^Exec=.*|Exec=$FLATPAK_COMMAND|' \
+                      -e 's|^Icon=.*|Icon=$FLATPAK_APP_ID|' \
+                      /app/share/applications/$FLATPAK_APP_ID.desktop
                   fi
 
                   if [ ! -f /app/share/applications/$FLATPAK_APP_ID.desktop ]; then
-                    cat > /app/share/applications/$FLATPAK_APP_ID.desktop <<EOF_DESKTOP
-                  [Desktop Entry]
-                  Type=Application
-                  Name=PDFutils
-                  Comment=Qt GUI and CLI utilities for working with PDF files
-                  Exec=$FLATPAK_COMMAND
-                  Icon=$FLATPAK_APP_ID
-                  Categories=Office;Utility;
-                  Terminal=false
-                  EOF_DESKTOP
+                    printf '%s\n' \
+                      '[Desktop Entry]' \
+                      'Type=Application' \
+                      'Name=PDFutils' \
+                      'Comment=Qt GUI and CLI utilities for working with PDF files' \
+                      'Exec=$FLATPAK_COMMAND' \
+                      'Icon=$FLATPAK_APP_ID' \
+                      'Categories=Office;Utility;' \
+                      'Terminal=false' \
+                      > /app/share/applications/$FLATPAK_APP_ID.desktop
                   fi
 
                   for icon_dir in /app/share/icons/hicolor/*/apps; do
-                    [ -d "\$icon_dir" ] || continue
+                    [ -d "$icon_dir" ] || continue
 
-                    if [ -f "\$icon_dir/pdfutils.png" ]; then
-                      mv "\$icon_dir/pdfutils.png" "\$icon_dir/$FLATPAK_APP_ID.png"
+                    if [ -f "$icon_dir/pdfutils.png" ]; then
+                      mv "$icon_dir/pdfutils.png" "$icon_dir/$FLATPAK_APP_ID.png"
                     fi
 
-                    if [ -f "\$icon_dir/pdfutils.svg" ]; then
-                      mv "\$icon_dir/pdfutils.svg" "\$icon_dir/$FLATPAK_APP_ID.svg"
+                    if [ -f "$icon_dir/pdfutils.svg" ]; then
+                      mv "$icon_dir/pdfutils.svg" "$icon_dir/$FLATPAK_APP_ID.svg"
                     fi
                   done
           EOF_FLATPAK
 
-          # Remove YAML indentation introduced by the shell heredoc inside the GitHub Actions block.
-          sed -i 's/^          //' "$FLATPAK_APP_ID.yml"
+          python3 - <<'PY'
+          import pathlib
+          import sys
+          try:
+              import yaml
+          except ImportError:
+              sys.exit(0)
+
+          path = pathlib.Path("eu.fatelarico.PDFutils.yml")
+          with path.open("r", encoding="utf-8") as f:
+              yaml.safe_load(f)
+          PY
 
           cat "$FLATPAK_APP_ID.yml"
 
