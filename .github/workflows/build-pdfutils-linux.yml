@@ -1,7 +1,7 @@
 name: build-pdfutils-linux
 
 on:
-  push:f
+  push:
     tags:
       - 'v*'
 
