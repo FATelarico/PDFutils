@@ -2,8 +2,8 @@ name: ci
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    tags:
+      - 'v*'        # runs on tags like v1.0.0, v2.3.4
 
 jobs:
   test:

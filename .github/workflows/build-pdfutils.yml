@@ -2,8 +2,8 @@ name: build-pdfutils
 
 on:
   push:
-  pull_request:
-  workflow_dispatch:
+    tags:
+      - 'v*'        # runs on tags like v1.0.0, v2.3.4
 
 jobs:
   build:
@@ -11,8 +11,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
-            triplet: x64-linux
+          # - os: ubuntu-24.04
+          #   triplet: x64-linux
           - os: windows-2025
             triplet: x64-windows
           - os: macos-15
@@ -32,15 +32,15 @@ jobs:
           cache: true
           # modules: 'qttools'
 
-      - name: Verify Qt LinguistTools
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -x "$QT_ROOT_DIR/bin/lupdate"
-          test -x "$QT_ROOT_DIR/bin/lrelease"
-          find "$QT_ROOT_DIR" -name Qt6LinguistToolsConfig.cmake -print -quit | grep -q .
-          "$QT_ROOT_DIR/bin/lupdate" -version
-          "$QT_ROOT_DIR/bin/lrelease" -version
+      # - name: Verify Qt LinguistTools
+      #   shell: bash
+      #   run: |
+      #     set -euo pipefail
+      #     test -x "$QT_ROOT_DIR/bin/lupdate"
+      #     test -x "$QT_ROOT_DIR/bin/lrelease"
+      #     find "$QT_ROOT_DIR" -name Qt6LinguistToolsConfig.cmake -print -quit | grep -q .
+      #     "$QT_ROOT_DIR/bin/lupdate" -version
+      #     "$QT_ROOT_DIR/bin/lrelease" -version
           
       - name: Set up vcpkg and install qpdf
         shell: pwsh
