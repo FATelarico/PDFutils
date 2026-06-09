@@ -1,7 +1,7 @@
 name: build-pdfutils-linux
 
 on:
-  push:
+  push:f
     tags:
       - 'v*'
 
@@ -35,94 +35,97 @@ env:
 
 jobs:
   package-linux-deb:
-    name: Package Linux DEB
+    name: Package Linux DEB (${{ matrix.distro }})
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' || inputs.package == 'all' || inputs.package == 'deb'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: ubuntu-24.04
+            image: ubuntu:24.04
+            artifact: PDFutils-linux-ubuntu-24.04-deb
+            dist_dir: dist/deb/ubuntu-24.04
+
+          - distro: debian-12
+            image: debian:12
+            artifact: PDFutils-linux-debian-12-deb
+            dist_dir: dist/deb/debian-12
+
+          - distro: debian-13
+            image: debian:13
+            artifact: PDFutils-linux-debian-13-deb
+            dist_dir: dist/deb/debian-13
 
     steps:
       - name: Check out source
         uses: actions/checkout@v6
 
-      - name: Install build and packaging dependencies
+      - name: Build DEB package inside target distro
         shell: bash
         run: |
           set -euo pipefail
 
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential \
-            cmake \
-            ninja-build \
-            pkg-config \
-            qt6-base-dev \
-            qt6-tools-dev \
-            qt6-tools-dev-tools \
-            linguist-qt6 \
-            libqpdf-dev \
-            dpkg-dev \
-            fakeroot \
-            file \
-            lintian \
-            desktop-file-utils
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            "${{ matrix.image }}" \
+            bash -euxo pipefail -c '
+              export DEBIAN_FRONTEND=noninteractive
 
-      - name: Configure
-        shell: bash
-        run: |
-          set -euo pipefail
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                build-essential \
+                cmake \
+                ninja-build \
+                pkg-config \
+                qt6-base-dev \
+                qt6-tools-dev \
+                qt6-tools-dev-tools \
+                libqpdf-dev \
+                dpkg-dev \
+                fakeroot \
+                file \
+                lintian \
+                desktop-file-utils \
+                ca-certificates
 
-          cmake -S . -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DCMAKE_INSTALL_PREFIX=/usr
+              rm -rf build-deb "${{ matrix.dist_dir }}"
+              mkdir -p "${{ matrix.dist_dir }}"
 
-      - name: Build
-        shell: bash
-        run: |
-          set -euo pipefail
-          cmake --build build --parallel "$(nproc)"
+              cmake -S . -B build-deb -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INSTALL_PREFIX=/usr
 
-      - name: Build DEB package with CPack
-        shell: bash
-        run: |
-          set -euo pipefail
+              cmake --build build-deb --parallel "$(nproc)"
 
-          mkdir -p dist/deb
+              cpack \
+                --config build-deb/CPackConfig.cmake \
+                -G DEB \
+                -C Release \
+                -B "${{ matrix.dist_dir }}" \
+                --verbose
 
-          cpack \
-            --config build/CPackConfig.cmake \
-            -G DEB \
-            -C "$BUILD_TYPE" \
-            -B dist/deb \
-            --verbose
+              dpkg-deb --info "${{ matrix.dist_dir }}"/*.deb
+              dpkg-deb --contents "${{ matrix.dist_dir }}"/*.deb
 
-          ls -lah dist/deb
+              apt-get install -y ./"${{ matrix.dist_dir }}"/*.deb
 
-      - name: Inspect DEB package
-        shell: bash
-        run: |
-          set -euo pipefail
+              command -v PDFutils-gui
+              command -v PDFutils-cli
 
-          dpkg-deb --info dist/deb/*.deb
-          dpkg-deb --contents dist/deb/*.deb
-          lintian --fail-on error dist/deb/*.deb
+              ldd "$(command -v PDFutils-gui)"
+              ldd "$(command -v PDFutils-cli)"
 
-      - name: Test DEB package installation
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          sudo apt-get install -y ./dist/deb/*.deb
-
-          command -v PDFutils-gui
-          command -v PDFutils-cli
-
-          ldd "$(command -v PDFutils-gui)"
-          ldd "$(command -v PDFutils-cli)"
+              lintian --fail-on error "${{ matrix.dist_dir }}"/*.deb
+            '
 
       - name: Upload DEB package
         uses: actions/upload-artifact@v4
         with:
-          name: PDFutils-linux-deb
-          path: dist/deb/*.deb
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.dist_dir }}/*.deb
           if-no-files-found: error
 
   package-linux-rpm:
@@ -215,7 +218,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             flatpak \
-            flatpak-builder
+            flatpak-builder \
+            elfutils
 
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
 
