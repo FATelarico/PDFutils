@@ -1,0 +1,350 @@
+name: build-pdfutils-linux
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BUILD_TYPE: Release
+  FEDORA_IMAGE: fedora:44
+
+  FLATPAK_APP_ID: eu.fatelarico.PDFutils
+  FLATPAK_COMMAND: PDFutils-gui
+  FLATPAK_RUNTIME_VERSION: '6.8'
+
+  # qpdf 12.2.0 is a conservative Flatpak build pin for this project.
+  # Your own project currently declares C++17.
+  QPDF_FLATPAK_TAG: v12.2.0
+
+jobs:
+  package-linux-deb:
+    name: Package Linux DEB
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Install build and packaging dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            qt6-base-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            linguist-qt6 \
+            libqpdf-dev \
+            dpkg-dev \
+            fakeroot \
+            file \
+            lintian \
+            desktop-file-utils
+
+      - name: Configure
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build --parallel "$(nproc)"
+
+      - name: Build DEB package with CPack
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist/deb
+
+          cpack \
+            --config build/CPackConfig.cmake \
+            -G DEB \
+            -C "$BUILD_TYPE" \
+            -B dist/deb \
+            --verbose
+
+          ls -lah dist/deb
+
+      - name: Inspect DEB package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dpkg-deb --info dist/deb/*.deb
+          dpkg-deb --contents dist/deb/*.deb
+          lintian --fail-on error dist/deb/*.deb
+
+      - name: Test DEB package installation
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo apt-get install -y ./dist/deb/*.deb
+
+          command -v PDFutils-gui
+          command -v PDFutils-cli
+
+          ldd "$(command -v PDFutils-gui)"
+          ldd "$(command -v PDFutils-cli)"
+
+      - name: Upload DEB package
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDFutils-linux-deb
+          path: dist/deb/*.deb
+          if-no-files-found: error
+
+  package-linux-rpm:
+    name: Package Linux RPM
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Build RPM package with CPack inside Fedora
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            "$FEDORA_IMAGE" \
+            bash -euxo pipefail -c '
+              dnf install -y \
+                gcc \
+                gcc-c++ \
+                cmake \
+                ninja-build \
+                pkgconf-pkg-config \
+                qt6-qtbase-devel \
+                qt6-qttools-devel \
+                qt6-linguist \
+                qpdf-devel \
+                rpm-build \
+                rpmdevtools \
+                file \
+                desktop-file-utils
+
+              cmake -S . -B build-rpm -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INSTALL_PREFIX=/usr
+
+              cmake --build build-rpm --parallel "$(nproc)"
+
+              mkdir -p dist/rpm
+
+              cpack \
+                --config build-rpm/CPackConfig.cmake \
+                -G RPM \
+                -C Release \
+                -B dist/rpm \
+                -D CPACK_RPM_PACKAGE_LICENSE=GPL-3.0-or-later \
+                -D CPACK_RPM_PACKAGE_GROUP=Applications/Productivity \
+                -D CPACK_RPM_PACKAGE_AUTOREQ=ON \
+                --verbose
+
+              ls -lah dist/rpm
+
+              rpm -qip dist/rpm/*.rpm
+              rpm -qlp dist/rpm/*.rpm
+
+              dnf install -y dist/rpm/*.rpm
+
+              command -v PDFutils-gui
+              command -v PDFutils-cli
+
+              ldd "$(command -v PDFutils-gui)"
+              ldd "$(command -v PDFutils-cli)"
+            '
+
+      - name: Upload RPM package
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDFutils-linux-rpm
+          path: dist/rpm/*.rpm
+          if-no-files-found: error
+
+  package-linux-flatpak:
+    name: Package Linux Flatpak
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Install Flatpak tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            flatpak \
+            flatpak-builder
+
+          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+
+          flatpak install --user -y --noninteractive flathub \
+            "org.kde.Platform//$FLATPAK_RUNTIME_VERSION" \
+            "org.kde.Sdk//$FLATPAK_RUNTIME_VERSION"
+
+      - name: Generate Flatpak manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > "$FLATPAK_APP_ID.yml" <<EOF_FLATPAK
+          app-id: $FLATPAK_APP_ID
+          runtime: org.kde.Platform
+          runtime-version: '$FLATPAK_RUNTIME_VERSION'
+          sdk: org.kde.Sdk
+          command: $FLATPAK_COMMAND
+
+          finish-args:
+            - --share=ipc
+            - --socket=fallback-x11
+            - --socket=wayland
+            - --device=dri
+            - --filesystem=home
+
+          cleanup:
+            - /include
+            - /lib/cmake
+            - /lib/pkgconfig
+            - /share/doc
+            - /share/man
+
+          modules:
+            - name: qpdf
+              buildsystem: cmake-ninja
+              config-opts:
+                - -DCMAKE_BUILD_TYPE=Release
+                - -DCMAKE_INSTALL_PREFIX=/app
+              sources:
+                - type: git
+                  url: https://github.com/qpdf/qpdf.git
+                  tag: $QPDF_FLATPAK_TAG
+
+            - name: pdfutils
+              buildsystem: cmake-ninja
+              build-options:
+                env:
+                  CMAKE_PREFIX_PATH: /app
+                  PKG_CONFIG_PATH: /app/lib/pkgconfig:/app/lib64/pkgconfig
+              config-opts:
+                - -DCMAKE_BUILD_TYPE=Release
+                - -DCMAKE_INSTALL_PREFIX=/app
+                - -DCMAKE_PREFIX_PATH=/app
+              sources:
+                - type: dir
+                  path: .
+              post-install:
+                - |
+                  set -e
+
+                  mkdir -p /app/share/applications
+
+                  if [ -f /app/share/applications/pdfutils.desktop ]; then
+                    mv /app/share/applications/pdfutils.desktop /app/share/applications/$FLATPAK_APP_ID.desktop
+                    desktop-file-edit \
+                      --set-key=Exec \
+                      --set-value=$FLATPAK_COMMAND \
+                      --set-key=Icon \
+                      --set-value=$FLATPAK_APP_ID \
+                      /app/share/applications/$FLATPAK_APP_ID.desktop || true
+                  fi
+
+                  if [ ! -f /app/share/applications/$FLATPAK_APP_ID.desktop ]; then
+                    cat > /app/share/applications/$FLATPAK_APP_ID.desktop <<EOF_DESKTOP
+                  [Desktop Entry]
+                  Type=Application
+                  Name=PDFutils
+                  Comment=Qt GUI and CLI utilities for working with PDF files
+                  Exec=$FLATPAK_COMMAND
+                  Icon=$FLATPAK_APP_ID
+                  Categories=Office;Utility;
+                  Terminal=false
+                  EOF_DESKTOP
+                  fi
+
+                  for icon_dir in /app/share/icons/hicolor/*/apps; do
+                    [ -d "\$icon_dir" ] || continue
+
+                    if [ -f "\$icon_dir/pdfutils.png" ]; then
+                      mv "\$icon_dir/pdfutils.png" "\$icon_dir/$FLATPAK_APP_ID.png"
+                    fi
+
+                    if [ -f "\$icon_dir/pdfutils.svg" ]; then
+                      mv "\$icon_dir/pdfutils.svg" "\$icon_dir/$FLATPAK_APP_ID.svg"
+                    fi
+                  done
+          EOF_FLATPAK
+
+          # Remove YAML indentation introduced by the shell heredoc inside the GitHub Actions block.
+          sed -i 's/^          //' "$FLATPAK_APP_ID.yml"
+
+          cat "$FLATPAK_APP_ID.yml"
+
+      - name: Build Flatpak bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/flatpak
+
+          flatpak-builder \
+            --user \
+            --force-clean \
+            --install-deps-from=flathub \
+            --repo=flatpak-repo \
+            flatpak-build-dir \
+            "$FLATPAK_APP_ID.yml"
+
+          flatpak build-bundle \
+            flatpak-repo \
+            "dist/flatpak/PDFutils-${VERSION}-linux-x86_64.flatpak" \
+            "$FLATPAK_APP_ID" \
+            stable
+
+          ls -lah dist/flatpak
+
+      - name: Test Flatpak bundle installation
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          flatpak install --user -y --noninteractive dist/flatpak/*.flatpak
+          flatpak info "$FLATPAK_APP_ID"
+
+          flatpak run \
+            --command=sh \
+            "$FLATPAK_APP_ID" \
+            -c 'test -x /app/bin/PDFutils-gui && test -x /app/bin/PDFutils-cli && ldd /app/bin/PDFutils-gui && ldd /app/bin/PDFutils-cli'
+
+      - name: Upload Flatpak bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDFutils-linux-flatpak
+          path: dist/flatpak/*.flatpak
+          if-no-files-found: error
