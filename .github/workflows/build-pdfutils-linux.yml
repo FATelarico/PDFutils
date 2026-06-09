@@ -4,7 +4,19 @@ on:
   push:
     tags:
       - 'v*'
+
   workflow_dispatch:
+    inputs:
+      package:
+        description: 'Which Linux package(s) to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - deb
+          - rpm
+          - flatpak
 
 permissions:
   contents: read
@@ -25,6 +37,7 @@ jobs:
   package-linux-deb:
     name: Package Linux DEB
     runs-on: ubuntu-24.04
+    if: github.event_name == 'push' || inputs.package == 'all' || inputs.package == 'deb'
 
     steps:
       - name: Check out source
@@ -115,6 +128,7 @@ jobs:
   package-linux-rpm:
     name: Package Linux RPM
     runs-on: ubuntu-24.04
+    if: github.event_name == 'push' || inputs.package == 'all' || inputs.package == 'rpm'
 
     steps:
       - name: Check out source
@@ -187,7 +201,8 @@ jobs:
   package-linux-flatpak:
     name: Package Linux Flatpak
     runs-on: ubuntu-24.04
-
+    if: github.event_name == 'push' || inputs.package == 'all' || inputs.package == 'flatpak'
+    
     steps:
       - name: Check out source
         uses: actions/checkout@v6
@@ -287,14 +302,14 @@ jobs:
                   fi
 
                   for icon_dir in /app/share/icons/hicolor/*/apps; do
-                    [ -d "$icon_dir" ] || continue
-
-                    if [ -f "$icon_dir/pdfutils.png" ]; then
-                      mv "$icon_dir/pdfutils.png" "$icon_dir/$FLATPAK_APP_ID.png"
+                    [ -d "\$icon_dir" ] || continue
+                  
+                    if [ -f "\$icon_dir/pdfutils.png" ]; then
+                      mv "\$icon_dir/pdfutils.png" "\$icon_dir/$FLATPAK_APP_ID.png"
                     fi
-
-                    if [ -f "$icon_dir/pdfutils.svg" ]; then
-                      mv "$icon_dir/pdfutils.svg" "$icon_dir/$FLATPAK_APP_ID.svg"
+                  
+                    if [ -f "\$icon_dir/pdfutils.svg" ]; then
+                      mv "\$icon_dir/pdfutils.svg" "\$icon_dir/$FLATPAK_APP_ID.svg"
                     fi
                   done
           EOF_FLATPAK
