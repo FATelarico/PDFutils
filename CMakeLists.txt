@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 
 project(PDFutils VERSION 0.4.1 LANGUAGES CXX)
 
@@ -420,9 +420,23 @@ set_target_properties(PDFutils-cli PROPERTIES
 )
 
 install(TARGETS PDFutils-gui PDFutils-cli
+    RUNTIME_DEPENDENCY_SET pdfutils_runtime_deps
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if(WIN32)
+    install(IMPORTED_RUNTIME_ARTIFACTS ${QPDF_TARGET}
+        RUNTIME_DEPENDENCY_SET pdfutils_runtime_deps
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+
+    install(RUNTIME_DEPENDENCY_SET pdfutils_runtime_deps
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
+        POST_EXCLUDE_REGEXES ".*[Ww]indows[/\\\\]System32[/\\\\].*"
+    )
+endif()
 
 # -----------------------------------------------------------------------------
 # Add tests for the CLI
