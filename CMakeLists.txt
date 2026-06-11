@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 
 project(PDFutils VERSION 0.4.1 LANGUAGES CXX)
 
@@ -423,6 +423,12 @@ install(TARGETS PDFutils-gui PDFutils-cli
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if(WIN32)
+    install(IMPORTED_RUNTIME_ARTIFACTS ${QPDF_TARGET}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
 
 # -----------------------------------------------------------------------------
 # Add tests for the CLI
