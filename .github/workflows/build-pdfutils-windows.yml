@@ -43,20 +43,38 @@ jobs:
 
           & (Join-Path $VcpkgRoot 'bootstrap-vcpkg.bat')
           $VcpkgExe = Join-Path $VcpkgRoot 'vcpkg.exe'
+          $InstalledDir = Join-Path $VcpkgRoot "installed/$env:VCPKG_TARGET_TRIPLET"
 
           & $VcpkgExe install "qpdf:$env:VCPKG_TARGET_TRIPLET"
           "VCPKG_ROOT=$VcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VCPKG_INSTALLED_DIR=$InstalledDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          $QpdfConfig = Get-ChildItem -Path $InstalledDir -Recurse -File |
+            Where-Object {
+              $_.Name -in @('qpdfConfig.cmake', 'qpdf-config.cmake') -and
+              $_.FullName -notmatch '[\\/]debug[\\/]'
+            } |
+            Select-Object -First 1
+
+          if (-not $QpdfConfig) {
+            throw "qpdfConfig.cmake was not found under $InstalledDir"
+          }
+
+          Write-Host "Found qpdf package config at $($QpdfConfig.FullName)"
+          "QPDF_DIR=$($QpdfConfig.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Configure
         shell: pwsh
         run: |
           $Toolchain = Join-Path $env:VCPKG_ROOT 'scripts/buildsystems/vcpkg.cmake'
+          $Qt6Dir = Join-Path $env:QT_ROOT_DIR 'lib/cmake/Qt6'
 
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="$Toolchain" `
             -DVCPKG_TARGET_TRIPLET=$env:VCPKG_TARGET_TRIPLET `
-            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR"
+            -DQt6_DIR="$Qt6Dir" `
+            -Dqpdf_DIR="$env:QPDF_DIR"
 
       - name: Build
         shell: pwsh
