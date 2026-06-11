@@ -420,7 +420,6 @@ set_target_properties(PDFutils-cli PROPERTIES
 )
 
 install(TARGETS PDFutils-gui PDFutils-cli
-    RUNTIME_DEPENDENCY_SET pdfutils_runtime_deps
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
