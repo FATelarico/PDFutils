@@ -47,16 +47,35 @@ jobs:
           & $VcpkgExe install "qpdf:$env:VCPKG_TARGET_TRIPLET"
           "VCPKG_ROOT=$VcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      - name: Diagnose vcpkg qpdf install
+        shell: pwsh
+        run: |
+          $TripletRoot = Join-Path $env:VCPKG_ROOT "installed/$env:VCPKG_TARGET_TRIPLET"
+      
+          Write-Host "VCPKG_ROOT=$env:VCPKG_ROOT"
+          Write-Host "VCPKG_TARGET_TRIPLET=$env:VCPKG_TARGET_TRIPLET"
+          Write-Host "TripletRoot=$TripletRoot"
+      
+          & "$env:VCPKG_ROOT/vcpkg" list
+      
+          Get-ChildItem -Recurse $TripletRoot |
+            Where-Object {
+              $_.Name -match 'qpdf|libqpdf|qpdfConfig|qpdf-config|pkgconfig|\.pc$'
+            } |
+            Select-Object FullName
+
       - name: Configure
         shell: pwsh
         run: |
           $Toolchain = Join-Path $env:VCPKG_ROOT 'scripts/buildsystems/vcpkg.cmake'
-
+          $TripletRoot = Join-Path $env:VCPKG_ROOT "installed/$env:VCPKG_TARGET_TRIPLET"
+      
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="$Toolchain" `
             -DVCPKG_TARGET_TRIPLET=$env:VCPKG_TARGET_TRIPLET `
-            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR"
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR;$TripletRoot;$TripletRoot/lib/cmake/qpdf;$TripletRoot/share/qpdf" `
+            -Dqpdf_DIR="$TripletRoot/lib/cmake/qpdf"
 
       - name: Build
         run: cmake --build build --config Release --parallel
