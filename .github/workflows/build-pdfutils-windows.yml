@@ -61,24 +61,46 @@ jobs:
         run: |
           cmake --build build --config Release --parallel
 
-      - name: Package portable ZIP and installer EXE
+      - name: Package portable ZIP
         shell: pwsh
-        working-directory: build
         run: |
-          cpack --config CPackConfig.cmake -C Release --verbose
+          $PortableDir = Join-Path $PWD 'dist/windows/portable'
+          New-Item -ItemType Directory -Force -Path $PortableDir | Out-Null
 
-          Get-ChildItem -File *.zip,*.exe | Format-Table Name,Length
+          cpack `
+            --config build/CPackConfig.cmake `
+            -G ZIP `
+            -C Release `
+            -B "$PortableDir" `
+            --verbose
+
+          Get-ChildItem -Path $PortableDir -Filter *.zip -File | Format-Table Name,Length
+
+      - name: Package installer EXE
+        shell: pwsh
+        run: |
+          $InstallerDir = Join-Path $PWD 'dist/windows/installer'
+          New-Item -ItemType Directory -Force -Path $InstallerDir | Out-Null
+
+          cpack `
+            --config build/CPackConfig.cmake `
+            -G NSIS `
+            -C Release `
+            -B "$InstallerDir" `
+            --verbose
+
+          Get-ChildItem -Path $InstallerDir -Filter *.exe -File | Format-Table Name,Length
 
       - name: Upload portable ZIP
         uses: actions/upload-artifact@v4
         with:
           name: PDFutils-windows-portable
-          path: build/*.zip
+          path: dist/windows/portable/*.zip
           if-no-files-found: error
 
       - name: Upload installer EXE
         uses: actions/upload-artifact@v4
         with:
           name: PDFutils-windows-installer
-          path: build/*.exe
+          path: dist/windows/installer/*.exe
           if-no-files-found: error
