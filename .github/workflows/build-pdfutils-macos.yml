@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'        # runs on tags like v1.0.0, v2.3.4
+  workflow_dispatch: 
 
 jobs:
   build-macos:
