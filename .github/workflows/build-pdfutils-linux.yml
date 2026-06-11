@@ -101,14 +101,6 @@ jobs:
               dpkg-deb --info "${{ matrix.dist_dir }}"/*.deb
               dpkg-deb --contents "${{ matrix.dist_dir }}"/*.deb
 
-              dpkg-deb -c dist/deb/*.deb | tee /tmp/pdfutils-deb-contents.txt
-
-              grep -E "/usr/share/icons/hicolor/.*/apps/pdfutils\.png$" \
-                /tmp/pdfutils-deb-contents.txt
-
-              grep -E "/usr/share/applications/pdfutils\.desktop$" \
-                /tmp/pdfutils-deb-contents.txt
-
               apt-get install -y ./"${{ matrix.dist_dir }}"/*.deb
 
               command -v PDFutils-gui
