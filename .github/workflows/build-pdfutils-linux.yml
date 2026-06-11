@@ -101,6 +101,12 @@ jobs:
               dpkg-deb --info "${{ matrix.dist_dir }}"/*.deb
               dpkg-deb --contents "${{ matrix.dist_dir }}"/*.deb
 
+              grep -E "/usr/share/icons/hicolor/.*/apps/pdfutils\.png$" \
+                /tmp/pdfutils-deb-contents.txt
+
+              grep -E "/usr/share/applications/pdfutils\.desktop$" \
+                /tmp/pdfutils-deb-contents.txt
+
               apt-get install -y ./"${{ matrix.dist_dir }}"/*.deb
 
               command -v PDFutils-gui
@@ -174,7 +180,14 @@ jobs:
               ls -lah dist/rpm
 
               rpm -qip dist/rpm/*.rpm
-              rpm -qlp dist/rpm/*.rpm
+              rpm -qlp dist/rpm/*.rpm | tee /tmp/pdfutils-rpm-contents.txt
+
+              grep -E "/usr/share/applications/pdfutils\.desktop$" \
+                /tmp/pdfutils-rpm-contents.txt
+
+              grep -E "/usr/share/icons/hicolor/.*/apps/pdfutils\.(png|svg)$" \
+                /tmp/pdfutils-rpm-contents.txt
+
 
               dnf install -y dist/rpm/*.rpm
 

@@ -593,6 +593,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.desktop.in")
         install(FILES "${CMAKE_CURRENT_BINARY_DIR}/media/pdfutils.desktop"
             DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
         )
+        install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/media/pdfutils.png"
+            DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps"
+            RENAME "${APP_ICON_NAME}.png"
+        )
         add_dependencies(PDFutils-gui PDFutils_debian_changelog)
         add_dependencies(PDFutils-cli PDFutils_debian_changelog)
     endif()
