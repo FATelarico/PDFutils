@@ -42,6 +42,11 @@ else()
     set(QPDF_TARGET qpdf::libqpdf)
 endif()
 
+if(WIN32)
+    find_package(ZLIB REQUIRED)
+    find_package(JPEG REQUIRED)
+endif()
+
 set(TS_FILES
     # translations/PDFutils_en_GB.ts # Source lanuage
     translations/PDFutils_it_IT.ts
@@ -425,7 +430,10 @@ install(TARGETS PDFutils-gui PDFutils-cli
 )
 
 if(WIN32)
-    install(IMPORTED_RUNTIME_ARTIFACTS ${QPDF_TARGET}
+    install(IMPORTED_RUNTIME_ARTIFACTS
+        ${QPDF_TARGET}
+        ZLIB::ZLIB
+        JPEG::JPEG
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 endif()
