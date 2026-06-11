@@ -425,19 +425,11 @@ install(TARGETS PDFutils-gui PDFutils-cli
 )
 
 if(WIN32)
-    install(IMPORTED_RUNTIME_ARTIFACTS
-        ${QPDF_TARGET}
-        RUNTIME_DEPENDENCY_SET pdfutils_qpdf_runtime_deps
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-
-    install(RUNTIME_DEPENDENCY_SET pdfutils_qpdf_runtime_deps
+    install(DIRECTORY
+        "$<TARGET_FILE_DIR:${QPDF_TARGET}>/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
-        DIRECTORIES "$<TARGET_FILE_DIR:${QPDF_TARGET}>"
-        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
-        POST_EXCLUDE_REGEXES
-            ".*[Ww]indows[/\\\\]System32[/\\\\].*"
-            ".*[Ww]indows[/\\\\]WinSxS[/\\\\].*"
+        FILES_MATCHING
+        PATTERN "*.dll"
     )
 endif()
 # -----------------------------------------------------------------------------
