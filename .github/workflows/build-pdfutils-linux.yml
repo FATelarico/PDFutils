@@ -3,7 +3,7 @@ name: build-pdfutils-linux
 on:
   push:
     tags:
-      - 'v*'
+      - 'z*'        # runs on tags starting with z
 
   workflow_dispatch:
     inputs:
