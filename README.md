@@ -1,4 +1,7 @@
-# PDFutils
+<img align="left" src="https://raw.githubusercontent.com/FATelarico/PDFutils/refs/heads/main/media/pdfutils.png" width="128" alt="PDFutils logo">
+
+<h1>PDFutils</h1>
+<br><br>
 
 PDFutils is a Qt-based utility suite for working with PDF files. The source code builds two front ends: 
 
@@ -9,7 +12,11 @@ Both front ends use the same `pdfutils_core` static library as a shared backend 
 
 ## Features
 
-PDFutils provides practical PDF manipulation tools:
+The project includes both a command-line interface and a graphical interface with **light and dark** themes based on [*Qt-Material*](https://github.com/UN-GCPDS/qt-material) with recolourised icons from IBM's [*Carbon Design System*](https://github.com/carbon-design-system/carbon) and is packaged for Linux (debian-/ubuntu- and RHEL-/Arch- derivatives), Windows, and macOS.
+
+<img src="https://raw.githubusercontent.com/FATelarico/PDFutils/refs/heads/main/screenshots/MainWindow_Dark.png" width="45%"/>&nbsp;<img src="https://raw.githubusercontent.com/FATelarico/PDFutils/refs/heads/main/screenshots/MainWindow_Light.png" width="45%"/>
+
+PDFutils provides practical PDF manipulation tools based on [qPDF](https://github.com/qpdf/qpdf):
 
 - Merge PDF files
 - Split PDF files
@@ -17,22 +24,35 @@ PDFutils provides practical PDF manipulation tools:
 - Insert one PDF into one or more other PDFs
 - Compress PDF files safely (with `qpdf`) or aggressively (using `Ghostscript`)
 - Convert image files to PDF
-- Optionally generate hyperlinked tables of contents for merged and converted PDFs
-- Provide both a graphical interface and a command-line interface
-- Check for newer GitHub release builds from both the GUI and CLI.
-- Support packaging for Linux, Windows, and macOS
 
-> [!NOTE]
-> The exact behaviour of each operation depends on the current implementation and release version.
-> `PDFutils` is a utility for PDF manipulation. PDF files can vary significantly in structure, encoding, compression, metadata, annotations, forms, embedded images, and producer-specific behaviour. Always verify important output files before relying on them in production, archival, or legal workflows.
+As well as additional features:
+
+- Optionally generate hyperlinked tables of contents for merged and converted PDFs
+- Check for newer GitHub release builds from both the GUI and CLI.
+
+<br>
+
+>[!NOTE]
+> PDF files can vary significantly in structure, encoding, compression, metadata, annotations, forms, embedded images, and producer-specific behaviour.
+> Always verify important output files before relying on them in production, archival, or legal workflows.
+<br>
 
 ## Downloading a Release Build
 
 Pre-built executables are distributed through the project's [release page](https://github.com/FATelarico/PDFutils/releases/latest). Open the release page, choose the latest suitable release, and download the package that matches your operating system and CPU architecture.
 
-At the moment, the only available pre-built packages are for Debian-based Linux systems on x86/x86_64 hardware. Other platforms, including Windows and macOS, are supported by the source code and CMake packaging configuration, but release executables for those systems are not currently published.
+<a href="https://github.com/FATelarico/PDFutils/releases/latest" target="_blank"><img align="center" src="https://img.shields.io/badge/GET-THE%20LATEST%20RELEASE-brightgreen" width="50%"/></a>
 
-Users on unsupported systems should build PDFutils from source.
+At the moment, pre-built packages are available for:
+
+|OS|Version|Hardware|
+|--|-------|--------|
+|<img src="https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linux.svg" width="48"/>|<img src="https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/debian.svg" width="48"/>&nbsp;<img src="https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/ubuntu.svg" width="48"/>|<img src="https://upload.wikimedia.org/wikipedia/commons/1/1a/AMD64_Logo.svg"  width="48"/>|
+|<img src="https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linux.svg" width="48"/>|<img src="https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/fedora.svg" width="48"/>&nbsp;<img src="https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/opensuse.svg" width="48"/>|<img src="https://upload.wikimedia.org/wikipedia/commons/1/1a/AMD64_Logo.svg"  width="48"/>|
+|<img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/Msdos-icon.svg" width="48"/>|<img src="https://www.svgrepo.com/show/303223/microsoft-windows-22-logo.svg" width="48"/>&nbsp;<img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" width="48"/>|<img src="https://upload.wikimedia.org/wikipedia/commons/1/1a/AMD64_Logo.svg"  width="48"/>|
+|<img src="https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/apple.svg" width="48"/>|<img src="https://upload.wikimedia.org/wikipedia/commons/3/30/MacOS_logo.svg" width="48"/>|<img src="https://www.arm.com/-/media/global/logos/arm%20logo%20-%202025%20ink_rgb.svg?w=300&rev=741b6887a4954e7a91215ed4d5909083&revision=741b6887-a495-4e7a-9121-5ed4d5909083&hash=F363E98634E2773E80F10C7FF96D5459"  width="48"/>|
+
+Release executables for other platforms, including macOS on Intel silicon, are not published. Therefore, ssers on unsupported systems should try to build `PDFutils` from source.
 
 ## Architecture
 
@@ -42,116 +62,6 @@ The current architecture separates the project into four parts:
 * `PDFutils-gui`: the Qt Widgets graphical front end. It collects widget state, builds option structs, calls core services, and displays results (may depend on `core/`).
 * `PDFutils-cli`: the command-line front end. It parses arguments, builds the same option structs, calls the same core services, prints results, and exits with meaningful status codes (not depend on `gui/`).
 * `PDFutils_updates`: update-checking support for GitHub release metadata, used by both the GUI and CLI.
-
-## Current Project Structure
-
-
-The project currently uses the following nested source layout:
-
-```
-PDFutils/
-├── cli
-│   └── main_cli.cpp
-├── CMakeLists.txt
-├── core
-│   ├── compress_service.cpp
-│   ├── compress_service.h
-│   ├── extract_service.cpp
-│   ├── extract_service.h
-│   ├── image_to_pdf_service.cpp
-│   ├── image_to_pdf_service.h
-│   ├── insert_service.cpp
-│   ├── insert_service.h
-│   ├── merge_service.cpp
-│   ├── merge_service.h
-│   ├── operation_result.cpp
-│   ├── operation_result.h
-│   ├── page_range.cpp
-│   ├── page_range.h
-│   ├── qpdf_utils.cpp
-│   ├── qpdf_utils.h
-│   ├── split_service.cpp
-│   └── split_service.h
-├── gui
-│   ├── compress.cpp
-│   ├── compress.h
-│   ├── compress.ui
-│   ├── convertimg.cpp
-│   ├── convertimg.h
-│   ├── convertimg.ui
-│   ├── debugPrintSelections.cpp
-│   ├── debugPrintSelections.h
-│   ├── extract.cpp
-│   ├── extract.h
-│   ├── extract.ui
-│   ├── helptexts.cpp
-│   ├── helptexts.h
-│   ├── insert.cpp
-│   ├── insert.h
-│   ├── insert.ui
-│   ├── langselector.cpp
-│   ├── langselector.h
-│   ├── langselector.ui
-│   ├── main_gui.cpp
-│   ├── mainwindow.cpp
-│   ├── mainwindow.h
-│   ├── mainwindow_helpers.cpp
-│   ├── mainwindow.ui
-│   ├── merge.cpp
-│   ├── merge.h
-│   ├── merge.ui
-│   ├── split.cpp
-│   ├── split.h
-│   └── split.ui
-├── LICENSE
-├── LICENCE
-├── main.cpp
-├── media
-│   ├── add-document.svg
-│   ├── adobe.png
-│   ├── array-numbers.svg
-│   ├── bookmark.svg
-│   ├── checkmark.svg
-│   ├── choices.svg
-│   ├── clean.svg
-│   ├── compress.svg
-│   ├── custom-utils-gui.png
-│   ├── document-add.svg
-│   ├── document-subtract.svg
-│   ├── extract.svg
-│   ├── flow-data.svg
-│   ├── gs.png
-│   ├── help.svg
-│   ├── image.svg
-│   ├── insert-page.svg
-│   ├── MacOS.qss
-│   ├── media.qrc
-│   ├── menu.svg
-│   ├── merge.svg
-│   ├── minimize.svg
-│   ├── page-scroll.svg
-│   ├── pdf.png
-│   ├── pdf.svg
-│   ├── pdfutils.desktop.in
-│   ├── pdfutils.icns
-│   ├── pdfutils.ico
-│   ├── pdfutils.png
-│   ├── pdfutils.rc
-│   ├── performance.svg
-│   ├── select-range.svg
-│   ├── split.svg
-│   ├── table-of-contents.svg
-│   └── translate.svg
-├── README.md
-├── translations
-│   ├── PDFutils_it_IT.ts
-└── updates
-     ├── github_release_info.h
-     ├── github_release_parser.cpp
-     ├── github_release_parser.h
-     ├── github_update_checker.cpp
-     └── github_update_checker.h
-```
 
 ## Core Services
 
@@ -163,7 +73,6 @@ The shared backend currently exposes the following service modules:
 * `insert_service`;
 * `compress_service`;
 * `image_to_pdf_service`.
-
 
 Each service follows the same pattern:
 
@@ -335,7 +244,6 @@ PDFutils-cli img2pdf -o images.pdf --fill --margin-mm 0 image1.png image2.jpg
 PDFutils-cli img2pdf -o images.pdf --stretch --dpi 150 image1.png image2.jpg
 ```
 
-
 ### Checking for Updates
 
 
@@ -499,7 +407,7 @@ Supported package generators:
 | -------- | -------------- |
 | Linux    | DEB            |
 | Windows  | ZIP and NSIS   |
-| macOS    | DragNDrop DMG  |
+| macOS    | packaged app   |
 
 Create packages after building:
 
@@ -565,7 +473,7 @@ English is the source language. The currently maintained translation source file
 
 Translation source files are updated with the project translation target, compiled to `.qm` files during the build, and installed with the application package.
 
-The GUI includes language-selection support through the language selector.
+The GUI includes language-selection support through the language selector as well as by matching the system's language.
 
 ## Licence
 
