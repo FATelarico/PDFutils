@@ -3,7 +3,7 @@ name: build-pdfutils-macos
 on:
   push:
     tags:
-      - 'v*'        # runs on tags like v1.0.0, v2.3.4
+      - 'z*'        # runs on tags starting with z
   workflow_dispatch: 
 
 jobs:
