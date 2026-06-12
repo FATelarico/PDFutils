@@ -1,6 +1,7 @@
 #include "language_manager.h"
 #include "mainwindow.h"
 #include "release_metadata.h"
+#include "theme_manager.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -13,6 +14,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("PDFutils-gui");
     QCoreApplication::setOrganizationName("FATelarico");
     QCoreApplication::setApplicationVersion(QStringLiteral(PDFUTILS_DISPLAY_VERSION));
+
+    ThemeManager::applyTheme(app, ThemeManager::loadThemePreference());
 
     LanguageManager::instance().initializeFromUiLanguages(QLocale::system().uiLanguages());
 

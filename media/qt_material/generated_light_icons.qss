@@ -1,0 +1,152 @@
+QPushButton#btn38a {
+    qproperty-icon: url(icon_light:/primary/document-add-FAT.svg);
+}
+
+QPushButton#btn38b {
+    qproperty-icon: url(icon_light:/primary/document-subtract-FAT.svg);
+}
+
+QPushButton#btn38c {
+    qproperty-icon: url(icon_light:/primary/clean-FAT.svg);
+}
+
+QToolButton#tool39 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool42c {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool43 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QPushButton#btn44 {
+    qproperty-icon: url(icon_light:/primary/compress-FAT.svg);
+}
+
+QPushButton#btn45a {
+    qproperty-icon: url(icon_light:/primary/document-add-FAT.svg);
+}
+
+QPushButton#btn45b {
+    qproperty-icon: url(icon_light:/primary/document-subtract-FAT.svg);
+}
+
+QPushButton#btn45c {
+    qproperty-icon: url(icon_light:/primary/clean-FAT.svg);
+}
+
+QPushButton#btn48 {
+    qproperty-icon: url(icon_light:/primary/image-FAT.svg);
+}
+
+QPushButton#btn25a {
+    qproperty-icon: url(icon_light:/primary/document-add-FAT.svg);
+}
+
+QPushButton#btn25b {
+    qproperty-icon: url(icon_light:/primary/document-subtract-FAT.svg);
+}
+
+QPushButton#btn25c {
+    qproperty-icon: url(icon_light:/primary/clean-FAT.svg);
+}
+
+QToolButton#tool26 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QPushButton#btn28 {
+    qproperty-icon: url(icon_light:/primary/extract-FAT.svg);
+}
+
+QPushButton#btn30a {
+    qproperty-icon: url(icon_light:/primary/document-add-FAT.svg);
+}
+
+QPushButton#btn30b {
+    qproperty-icon: url(icon_light:/primary/document-subtract-FAT.svg);
+}
+
+QPushButton#btn30c {
+    qproperty-icon: url(icon_light:/primary/clean-FAT.svg);
+}
+
+QToolButton#tool31 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool32 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool33 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool34 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QPushButton#btn36 {
+    qproperty-icon: url(icon_light:/primary/split-FAT.svg);
+}
+
+QPushButton#btn50 {
+    qproperty-icon: url(icon_light:/primary/checklist.svg);
+}
+
+QPushButton#btn10a {
+    qproperty-icon: url(icon_light:/primary/document-add-FAT.svg);
+}
+
+QPushButton#btn10b {
+    qproperty-icon: url(icon_light:/primary/document-subtract-FAT.svg);
+}
+
+QPushButton#btn10c {
+    qproperty-icon: url(icon_light:/primary/clean-FAT.svg);
+}
+
+QToolButton#tool11 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QPushButton#btn15 {
+    qproperty-icon: url(icon_light:/primary/merge-FAT.svg);
+}
+
+QPushButton#btn17a {
+    qproperty-icon: url(icon_light:/primary/document-add-FAT.svg);
+}
+
+QPushButton#btn17b {
+    qproperty-icon: url(icon_light:/primary/document-subtract-FAT.svg);
+}
+
+QPushButton#btn17c {
+    qproperty-icon: url(icon_light:/primary/clean-FAT.svg);
+}
+
+QToolButton#tool18 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool20 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool21 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QToolButton#tool22 {
+    qproperty-icon: url(icon_light:/primary/help-FAT.svg);
+}
+
+QPushButton#btn23 {
+    qproperty-icon: url(icon_light:/primary/split-FAT.svg);
+}
+

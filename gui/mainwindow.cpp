@@ -9,10 +9,14 @@
 #include "insert.h"
 #include "compress.h"
 #include "convertimg.h"
+#include "theme_manager.h"
 #include "./ui_langselector.h"
 
+#include <QAction>
+#include <QActionGroup>
 #include <QDialog>
 #include <QEvent>
+#include <QMenu>
 
 #include <QDebug>
 
@@ -49,6 +53,7 @@ void MainWindow::changeEvent(QEvent* event)
         ui->retranslateUi(this);
         updateVersionMenuText();
         updateReleaseChannelActionText();
+        updateThemeMenuText();
     }
 
     QMainWindow::changeEvent(event);
@@ -60,6 +65,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     updateVersionMenuText();
+    m_themePreference = ThemeManager::loadThemePreference();
+    setupThemeMenu();
 
     loadReleaseChannelPreference();
 
@@ -131,6 +138,87 @@ void MainWindow::updateVersionMenuText()
 
     ui->menuVerify_updates->setTitle(versionText);
     ui->label00->setText(versionText);
+}
+
+void MainWindow::setupThemeMenu()
+{
+    m_themeMenu = new QMenu(ui->menuOptions);
+    m_themeActionGroup = new QActionGroup(this);
+    m_themeActionGroup->setExclusive(true);
+
+    m_followSystemThemeAction = new QAction(this);
+    m_followSystemThemeAction->setCheckable(true);
+    m_themeActionGroup->addAction(m_followSystemThemeAction);
+
+    m_lightThemeAction = new QAction(this);
+    m_lightThemeAction->setCheckable(true);
+    m_themeActionGroup->addAction(m_lightThemeAction);
+
+    m_darkThemeAction = new QAction(this);
+    m_darkThemeAction->setCheckable(true);
+    m_themeActionGroup->addAction(m_darkThemeAction);
+
+    connect(m_followSystemThemeAction, &QAction::triggered, this, [this]() {
+        setThemePreference(ThemeManager::AppTheme::System);
+    });
+    connect(m_lightThemeAction, &QAction::triggered, this, [this]() {
+        setThemePreference(ThemeManager::AppTheme::Light);
+    });
+    connect(m_darkThemeAction, &QAction::triggered, this, [this]() {
+        setThemePreference(ThemeManager::AppTheme::Dark);
+    });
+
+    m_themeMenu->addAction(m_followSystemThemeAction);
+    m_themeMenu->addAction(m_lightThemeAction);
+    m_themeMenu->addAction(m_darkThemeAction);
+
+    ui->menuOptions->addSeparator();
+    ui->menuOptions->addMenu(m_themeMenu);
+
+    updateThemeMenuText();
+    updateThemeActionState();
+}
+
+void MainWindow::setThemePreference(ThemeManager::AppTheme theme)
+{
+    auto* app = qobject_cast<QApplication*>(QCoreApplication::instance());
+    if (!app)
+        return;
+
+    if (!ThemeManager::applyTheme(*app, theme)) {
+        QMessageBox::warning(
+            this,
+            tr("Theme error"),
+            tr("Could not load the selected theme.")
+        );
+        updateThemeActionState();
+        return;
+    }
+
+    m_themePreference = theme;
+    ThemeManager::saveThemePreference(theme);
+    updateThemeActionState();
+}
+
+void MainWindow::updateThemeMenuText()
+{
+    if (!m_themeMenu)
+        return;
+
+    m_themeMenu->setTitle(tr("Theme"));
+    m_followSystemThemeAction->setText(tr("Follow system"));
+    m_lightThemeAction->setText(tr("Light"));
+    m_darkThemeAction->setText(tr("Dark"));
+}
+
+void MainWindow::updateThemeActionState()
+{
+    if (!m_themeActionGroup)
+        return;
+
+    m_followSystemThemeAction->setChecked(m_themePreference == ThemeManager::AppTheme::System);
+    m_lightThemeAction->setChecked(m_themePreference == ThemeManager::AppTheme::Light);
+    m_darkThemeAction->setChecked(m_themePreference == ThemeManager::AppTheme::Dark);
 }
 
 void MainWindow::on_link00c_triggered()

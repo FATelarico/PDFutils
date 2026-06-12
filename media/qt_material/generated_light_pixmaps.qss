@@ -1,0 +1,92 @@
+QLabel#icon39 {
+    qproperty-pixmap: url(icon_light:/primary/choices-FAT.svg);
+}
+
+QLabel#icon46 {
+    qproperty-pixmap: url(icon_light:/primary/add-document-FAT.svg);
+}
+
+QLabel#icon47 {
+    qproperty-pixmap: url(icon_light:/primary/table-of-contents-FAT.svg);
+}
+
+QLabel#icon26 {
+    qproperty-pixmap: url(icon_light:/primary/page-scroll-FAT.svg);
+}
+
+QLabel#icon27 {
+    qproperty-pixmap: url(icon_light:/primary/merge-FAT.svg);
+}
+
+QLabel#icon31 {
+    qproperty-pixmap: url(icon_light:/primary/flow-data-FAT.svg);
+}
+
+QLabel#icon32 {
+    qproperty-pixmap: url(icon_light:/primary/select-range-FAT.svg);
+}
+
+QLabel#icon33 {
+    qproperty-pixmap: url(icon_light:/primary/array-numbers-FAT.svg);
+}
+
+QLabel#icon34 {
+    qproperty-pixmap: url(icon_light:/primary/bookmark-FAT.svg);
+}
+
+QLabel#label51a {
+    qproperty-pixmap: url(icon_light:/primary/translate-FAT.svg);
+}
+
+QLabel#icon03 {
+    qproperty-pixmap: url(icon_light:/primary/merge-FAT.svg);
+}
+
+QLabel#icon02 {
+    qproperty-pixmap: url(icon_light:/primary/split-FAT.svg);
+}
+
+QLabel#icon05 {
+    qproperty-pixmap: url(icon_light:/primary/extract-FAT.svg);
+}
+
+QLabel#icon06 {
+    qproperty-pixmap: url(icon_light:/primary/insert-page-FAT.svg);
+}
+
+QLabel#icon07 {
+    qproperty-pixmap: url(icon_light:/primary/compress-FAT.svg);
+}
+
+QLabel#icon09 {
+    qproperty-pixmap: url(icon_light:/primary/image-FAT.svg);
+}
+
+QLabel#icon11 {
+    qproperty-pixmap: url(icon_light:/primary/page-scroll-FAT.svg);
+}
+
+QLabel#icon13 {
+    qproperty-pixmap: url(icon_light:/primary/bookmark-FAT.svg);
+}
+
+QLabel#icon14 {
+    qproperty-pixmap: url(icon_light:/primary/table-of-contents-FAT.svg);
+}
+
+QLabel#icon18 {
+    qproperty-pixmap: url(icon_light:/primary/flow-data-FAT.svg);
+}
+
+QLabel#icon20 {
+    qproperty-pixmap: url(icon_light:/primary/select-range-FAT.svg);
+}
+
+QLabel#icon21 {
+    qproperty-pixmap: url(icon_light:/primary/array-numbers-FAT.svg);
+}
+
+QLabel#icon22 {
+    qproperty-pixmap: url(icon_light:/primary/bookmark-FAT.svg);
+}
+

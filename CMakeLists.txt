@@ -1,12 +1,19 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(PDFutils VERSION 0.4.1 LANGUAGES CXX)
+project(PDFutils VERSION 0.5.0 LANGUAGES CXX)
 
 set(PDFUTILS_PRERELEASE "beta")
-set(PDFUTILS_DISPLAY_VERSION "${PROJECT_VERSION}-${PDFUTILS_PRERELEASE}")
-set(PDFUTILS_DEBIAN_VERSION "${PROJECT_VERSION}~${PDFUTILS_PRERELEASE}")
+
+if(PDFUTILS_PRERELEASE STREQUAL "")
+    set(PDFUTILS_DISPLAY_VERSION "${PROJECT_VERSION}")
+    set(PDFUTILS_DEBIAN_VERSION "${PROJECT_VERSION}")
+else()
+    set(PDFUTILS_DISPLAY_VERSION "${PROJECT_VERSION}-${PDFUTILS_PRERELEASE}")
+    set(PDFUTILS_DEBIAN_VERSION "${PROJECT_VERSION}~${PDFUTILS_PRERELEASE}")
+endif()
+
 set(PDFUTILS_RELEASE_DATE "2026-05-01T00:00:00Z")
-set(PDFUTILS_GITHUB_OWNER "fatelarico")
+set(PDFUTILS_GITHUB_OWNER "FATelarico")
 set(PDFUTILS_GITHUB_REPO "PDFutils")
 
 set(CMAKE_AUTOUIC ON)
@@ -131,6 +138,8 @@ set(GUI_SOURCES
     gui/mainwindow.h
     gui/mainwindow.ui
     gui/mainwindow_helpers.cpp
+    gui/theme_manager.cpp
+    gui/theme_manager.h
 
     gui/merge.cpp
     gui/merge.h
@@ -170,6 +179,7 @@ set(GUI_SOURCES
     gui/langselector.h
 
     media/media.qrc
+    media/qt_material.qrc
 )
 
 # These helpers are still intentionally excluded while they are manually included
@@ -424,6 +434,7 @@ install(TARGETS PDFutils-gui PDFutils-cli
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# Copy DLLs for Windows
 if(WIN32)
     install(DIRECTORY
         "$<TARGET_FILE_DIR:${QPDF_TARGET}>/"
